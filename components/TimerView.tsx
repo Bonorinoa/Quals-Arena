@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, Square, Save, AlertCircle, ArrowRight, Target, ShieldAlert } from 'lucide-react';
+import { Play, Pause, Square, Save, AlertCircle, ArrowRight, Target, ShieldAlert, Quote } from 'lucide-react';
 import { Session } from '../types';
 import { getLocalDate } from '../services/storage';
 
@@ -11,12 +11,49 @@ interface TimerViewProps {
 
 type TimerMode = 'SETUP' | 'RUNNING' | 'LOGGING';
 
+const ANCHORS = [
+  {
+    title: "THE SIGNAL EXTRACTION",
+    text: "\"High stimulation is just high variance.\" You cannot regress on a noisy variable."
+  },
+  {
+    title: "THE KYDLAND-PRESCOTT CONSTRAINT",
+    text: "\"Rules beat discretion.\" Discretion eliminates the credibility of the promise."
+  },
+  {
+    title: "THE MINSKY MOMENT",
+    text: "\"Lag is Ponzi Finance.\" Stability breeds instability."
+  },
+  {
+    title: "THE IDENTITY SHIFT",
+    text: "\"Owners build assets; employees log hours.\" Are you an employee?"
+  },
+  {
+    title: "THE AUDIO DEFENSE",
+    text: "Boredom is not an emergency—it is just the absence of noise."
+  },
+  {
+    title: "THE ARENA MINDSET",
+    text: "The problem sets are your MVP. Stop acting like a student."
+  },
+  {
+    title: "CAPITAL DEEPENING",
+    text: "Build a surplus of cognitive capital. Increase your marginal productivity."
+  },
+  {
+    title: "RADICAL HONESTY",
+    text: "The Scoreboard is the source of truth. Writing a '0' is better than lying."
+  }
+];
+
 export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCancel }) => {
   const [mode, setMode] = useState<TimerMode>('SETUP');
   const [isActive, setIsActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [targetSeconds, setTargetSeconds] = useState<number>(3600); // Default 1 hour
   const [stopConfirm, setStopConfirm] = useState(false); // For double-click stop
+  const [currentAnchor, setCurrentAnchor] = useState(ANCHORS[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Log form state
   const [reps, setReps] = useState<number>(0);
@@ -35,6 +72,25 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
     { label: '4h', value: 14400 },
   ];
 
+  // Randomize Anchor on Mount
+  useEffect(() => {
+    const random = ANCHORS[Math.floor(Math.random() * ANCHORS.length)];
+    setCurrentAnchor(random);
+  }, []);
+
+  // Safety Latch: Prevent accidental close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (mode === 'RUNNING' || mode === 'LOGGING') {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome requires this
+        return ''; // Legacy support
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [mode]);
+
   const toggleTimer = useCallback(() => {
     if (isActive) {
       if (intervalRef.current) window.clearInterval(intervalRef.current);
@@ -42,6 +98,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
     } else {
       setIsActive(true);
       intervalRef.current = window.setInterval(() => {
+        // We use Date.now() delta for accuracy, but simple increment is enough for UI 
+        // provided we capture start/end accurately for the log.
+        // For the MVP visual, simple increment is fine.
         setSeconds(s => s + 1);
       }, 1000);
       setStopConfirm(false); // Reset stop confirm if user resumes
@@ -70,7 +129,10 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   };
 
   const handleSave = () => {
+    if (isSubmitting) return; // Prevent double tap
     if (reps < 0) return;
+    
+    setIsSubmitting(true);
     
     const session: Session = {
       id: Math.random().toString(36).substr(2, 9),
@@ -160,8 +222,10 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   // VIEW: LOGGING (Debrief)
   // ----------------------------------------------------------------------
   if (mode === 'LOGGING') {
+    const deficitMinutes = (targetSeconds - seconds) / 60;
+    
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in fade-in duration-300">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in fade-in duration-300 overflow-y-auto">
         <div className="w-full bg-zinc-900 border border-zinc-800 p-8">
           <h2 className="text-2xl font-bold mb-6 text-zinc-100 font-mono border-b border-zinc-800 pb-4">
             SESSION DEBRIEF
@@ -179,7 +243,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
                 {seconds < targetSeconds && (
                    <div className="text-xs text-red-500 font-mono flex items-center gap-1">
                       <ShieldAlert size={12} />
-                      DEFICIT ({(targetSeconds - seconds) / 60}m)
+                      DEFICIT ({deficitMinutes.toFixed(2)}m)
+                   </div>
+                )}
+                {seconds >= targetSeconds && (
+                   <div className="text-xs text-emerald-500 font-mono flex items-center gap-1">
+                      <ShieldAlert size={12} />
+                      SURPLUS (+{Math.abs(deficitMinutes).toFixed(2)}m)
                    </div>
                 )}
               </div>
@@ -213,16 +283,18 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
             <div className="pt-4 flex gap-4">
                <button 
                 onClick={onCancel}
+                disabled={isSubmitting}
                 className="flex-1 py-4 border border-zinc-700 text-zinc-400 font-bold hover:bg-zinc-800 transition-all uppercase tracking-widest text-sm"
               >
                 Discard
               </button>
               <button 
                 onClick={handleSave}
-                className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Save size={18} />
-                Log Asset
+                {isSubmitting ? 'Minting...' : 'Log Asset'}
               </button>
             </div>
           </div>
@@ -290,12 +362,15 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         </button>
       </div>
 
-      <div className="mt-16 max-w-md text-center text-zinc-600 text-xs font-mono">
-        <div className="flex items-center justify-center gap-2 mb-2 text-amber-900/60">
-           <AlertCircle size={14} />
-           <span>THE KYDLAND-PRESCOTT CONSTRAINT</span>
+      {/* Random Daily Anchor */}
+      <div className="mt-16 max-w-lg text-center text-zinc-600 font-mono px-4">
+        <div className="flex items-center justify-center gap-2 mb-2 text-amber-900/60 uppercase text-[10px] tracking-widest font-bold">
+           <Quote size={10} />
+           <span>{currentAnchor.title}</span>
         </div>
-        "Rules beat discretion. The clock runs ONLY when eyes are on the paper."
+        <p className="text-xs italic leading-relaxed">
+          {currentAnchor.text}
+        </p>
       </div>
     </div>
   );
