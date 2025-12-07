@@ -173,7 +173,7 @@ A mechanism design tool for high-performance sober productivity. This single-pag
 ```bash
 # Clone and install
 git clone <repository-url>
-cd Quals-Arena
+cd <repository-directory>
 npm install
 
 # Local development
@@ -204,7 +204,7 @@ npm run preview
 ## 📊 Usage Philosophy
 
 This tool is designed around behavioral economics principles:
-- **Pre-commitment**: Reduces decision fatigue and akrasia
+- **Pre-commitment**: Reduces decision fatigue and akrasia (weakness of will)
 - **Signal vs. Noise**: Filters out low-quality data
 - **Loss Aversion**: Contract deficits create motivational pressure
 - **Identity Economics**: Framing as "asset building" vs. "time logging"
