@@ -172,8 +172,8 @@ A mechanism design tool for high-performance sober productivity. This single-pag
 
 ```bash
 # Clone and install
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/your-username/d1-protocol.git
+cd d1-protocol
 npm install
 
 # Local development
