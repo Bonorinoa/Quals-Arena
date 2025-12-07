@@ -15,6 +15,7 @@ export interface UserSettings {
   startDate: string; // When the protocol started
   name: string;
   substanceFreeStartDate: string;
+  googleSheetsUrl?: string; // Webhook URL for Google Apps Script
 }
 
 export interface DailyStats {
@@ -22,6 +23,13 @@ export interface DailyStats {
   totalDuration: number;
   totalReps: number;
   ser: number; // Sober Efficiency Rate (Reps / Hour)
+}
+
+export interface SyncQueueItem {
+  id: string;
+  session: Session;
+  status: 'PENDING' | 'FAILED';
+  retryCount: number;
 }
 
 export enum ViewMode {
@@ -36,4 +44,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   startDate: new Date().toISOString(),
   name: "D1 Economist",
   substanceFreeStartDate: new Date().toISOString(),
+  googleSheetsUrl: ""
 };
