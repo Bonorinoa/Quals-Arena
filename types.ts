@@ -48,7 +48,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   weeklyRepTarget: 50,
   dailyTimeGoalHours: 4,
   startDate: new Date().toISOString(),
-  name: "D1 Economist",
+  name: "highBeta User",
   substanceFreeStartDate: new Date().toISOString(),
   googleSheetsUrl: ""
 };
