@@ -82,8 +82,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
               <input
                 type="number"
                 step="0.5"
+                min="0"
+                max="6"
                 value={formData.dailyTimeGoalHours}
-                onChange={(e) => handleChange('dailyTimeGoalHours', parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    handleChange('dailyTimeGoalHours', 0);
+                  } else {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                      handleChange('dailyTimeGoalHours', Math.max(0, Math.min(6, numValue)));
+                    }
+                  }
+                }}
                 className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-3 font-mono text-xl focus:border-emerald-500 outline-none"
               />
             </div>
@@ -93,8 +105,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
               </label>
               <input
                 type="number"
+                min="0"
+                max="50"
                 value={formData.weeklyRepTarget}
-                onChange={(e) => handleChange('weeklyRepTarget', parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    handleChange('weeklyRepTarget', 0);
+                  } else {
+                    const numValue = parseInt(value);
+                    if (!isNaN(numValue)) {
+                      handleChange('weeklyRepTarget', Math.max(0, Math.min(50, numValue)));
+                    }
+                  }
+                }}
                 className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-3 font-mono text-xl focus:border-emerald-500 outline-none"
               />
             </div>

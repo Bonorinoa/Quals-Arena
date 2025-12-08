@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   ShieldCheck, ChevronDown, ChevronUp, Play, AlertOctagon, 
-  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText
+  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X
 } from 'lucide-react';
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
@@ -77,8 +77,92 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
 
+// Daily Stats Modal
+const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: () => void }> = ({ date, sessions, onClose }) => {
+   const daySessions = getSessionsByDate(sessions, date);
+   const totalDuration = getTotalDuration(daySessions);
+   const totalReps = getTotalReps(daySessions);
+   const ser = calculateSER(totalReps, totalDuration, MIN_DURATION_THRESHOLD_SECONDS);
+   const formattedDate = format(parseISO(date), 'EEEE, MMMM d, yyyy');
+
+   // Handle keyboard navigation
+   const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+         onClose();
+      }
+   };
+
+   return (
+      <div 
+         className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" 
+         onClick={onClose}
+         onKeyDown={handleKeyDown}
+      >
+         <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-zinc-800">
+               <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 font-mono">
+                  Daily Summary
+               </h2>
+               <button onClick={onClose} aria-label="Close modal" className="text-zinc-500 hover:text-white transition-colors">
+                  <X size={20} />
+               </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+               <div>
+                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-mono mb-2">Date</div>
+                  <div className="text-lg text-white font-mono">{formattedDate}</div>
+               </div>
+
+               <div className="grid grid-cols-3 gap-4">
+                  <div>
+                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Duration</div>
+                     <div className="text-xl text-white font-mono font-bold">{formatTimeFull(totalDuration)}</div>
+                  </div>
+                  <div>
+                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Reps</div>
+                     <div className="text-xl text-white font-mono font-bold">{totalReps}</div>
+                  </div>
+                  <div>
+                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">SER</div>
+                     <div className="text-xl text-white font-mono font-bold">
+                        {totalDuration > MIN_DURATION_THRESHOLD_SECONDS ? ser.toFixed(1) : 'N/A'}
+                     </div>
+                  </div>
+               </div>
+
+               {daySessions.length > 0 && (
+                  <div>
+                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-3">Sessions ({daySessions.length})</div>
+                     <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {daySessions.map((session) => (
+                           <div key={session.id} className="bg-zinc-950/50 border border-zinc-800 p-3 rounded">
+                              <div className="flex justify-between items-start mb-2">
+                                 <div className="text-sm text-white font-mono">{(session.durationSeconds / 60).toFixed(0)}m</div>
+                                 <div className="text-sm text-zinc-400 font-mono">{session.reps} reps</div>
+                              </div>
+                              {session.notes && (
+                                 <div className="text-xs text-zinc-500 font-mono mt-2 border-t border-zinc-800 pt-2">{session.notes}</div>
+                              )}
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               )}
+
+               {daySessions.length === 0 && (
+                  <div className="text-center py-8 text-zinc-600 text-sm font-mono">
+                     No sessions logged on this day.
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+   );
+};
+
 // MONTHLY CALENDAR GRID - Displays current month with proper weekday alignment and day numbers
-const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
+const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string) => void }> = ({ sessions, onDayClick }) => {
    const calendarData = useMemo(() => {
       const today = new Date();
       const monthStart = startOfMonth(today);
@@ -135,7 +219,17 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
                <div 
                   key={`${d.date}-${idx}`}
                   title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
-                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 transition-all cursor-help'} relative group`}
+                  onClick={() => !d.isEmpty && onDayClick(d.date)}
+                  onKeyDown={(e) => {
+                     if (!d.isEmpty && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        onDayClick(d.date);
+                     }
+                  }}
+                  tabIndex={d.isEmpty ? undefined : 0}
+                  role={d.isEmpty ? undefined : 'button'}
+                  aria-label={d.isEmpty ? undefined : `View stats for ${d.date}`}
+                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 focus:outline-none focus:border-white transition-all cursor-pointer'} relative group`}
                >
                   {!d.isEmpty && (
                      <span className="absolute inset-0 flex items-center justify-center text-[8px] text-zinc-500 group-hover:text-white font-mono transition-colors">
@@ -151,6 +245,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings, onStartSession, onRelapse }) => {
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   
   // -- Metrics Calculation --
   const stats = useMemo(() => {
@@ -313,7 +408,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Grid size={12} /> Monthly Consistency Grid
                </div>
-               <ConsistencyGrid sessions={sessions} />
+               <ConsistencyGrid sessions={sessions} onDayClick={setSelectedDate} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -408,6 +503,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
           </div>
         )}
       </div>
+
+      {/* Daily Stats Modal */}
+      {selectedDate && (
+        <DailyStatsModal 
+          date={selectedDate} 
+          sessions={sessions} 
+          onClose={() => setSelectedDate(null)} 
+        />
+      )}
     </div>
   );
 };
