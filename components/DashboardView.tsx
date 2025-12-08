@@ -14,6 +14,9 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
+import { formatTimeFull } from '../utils/timeUtils';
+import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
+import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS } from '../utils/sessionUtils';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -99,8 +102,8 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
       // Add actual days of the month
       for (const day of daysInMonth) {
          const dateStr = day.toISOString().split('T')[0];
-         const daySessions = sessions.filter(s => s.date === dateStr);
-         const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
+         const daySessions = getSessionsByDate(sessions, dateStr);
+         const reps = getTotalReps(daySessions);
          
          let intensity = 'bg-zinc-900';
          if (reps > 0) intensity = 'bg-emerald-900/40';
@@ -154,14 +157,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const todayStr = getLocalDate();
     const todayDate = new Date();
     
-    const yesterdayDate = subDays(todayDate, 1);
-    const offset = yesterdayDate.getTimezoneOffset();
-    const localYesterday = new Date(yesterdayDate.getTime() - (offset * 60 * 1000));
-    const yesterdayStr = localYesterday.toISOString().split('T')[0];
+    const yesterdayStr = getYesterdayDate();
 
-    const todaySessions = sessions.filter(s => s.date === todayStr);
-    const todayDuration = todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
-    const todayReps = todaySessions.reduce((acc, s) => acc + s.reps, 0);
+    const todaySessions = getSessionsByDate(sessions, todayStr);
+    const todayDuration = getTotalDuration(todaySessions);
+    const todayReps = getTotalReps(todaySessions);
     const todayHours = todayDuration / 3600;
 
     const todayNetPosition = todaySessions.reduce((acc, s) => {
@@ -169,15 +169,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       return acc + (s.durationSeconds - target);
     }, 0);
     
-    const MIN_DURATION_FOR_SER = 300; 
-    const todaySER = todayDuration > MIN_DURATION_FOR_SER ? (todayReps / todayHours) : 0;
-    const isTodayNoise = todayDuration > 0 && todayDuration <= MIN_DURATION_FOR_SER;
+    const todaySER = calculateSER(todayReps, todayDuration, MIN_DURATION_THRESHOLD_SECONDS);
+    const isTodayNoise = todayDuration > 0 && todayDuration <= MIN_DURATION_THRESHOLD_SECONDS;
 
-    const yesterdaySessions = sessions.filter(s => s.date === yesterdayStr);
-    const yesterdayDuration = yesterdaySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
-    const yesterdayReps = yesterdaySessions.reduce((acc, s) => acc + s.reps, 0);
+    const yesterdaySessions = getSessionsByDate(sessions, yesterdayStr);
+    const yesterdayDuration = getTotalDuration(yesterdaySessions);
+    const yesterdayReps = getTotalReps(yesterdaySessions);
     const yesterdayHours = yesterdayDuration / 3600;
-    const yesterdaySER = yesterdayDuration > MIN_DURATION_FOR_SER ? (yesterdayReps / yesterdayHours) : 0;
+    const yesterdaySER = calculateSER(yesterdayReps, yesterdayDuration, MIN_DURATION_THRESHOLD_SECONDS);
 
     const start = startOfWeek(todayDate, { weekStartsOn: 1 });
     const end = endOfWeek(todayDate, { weekStartsOn: 1 });
@@ -185,10 +184,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       isWithinInterval(parseISO(s.date), { start, end })
     );
 
-    const weeklyReps = weeklySessions.reduce((acc, s) => acc + s.reps, 0);
-    const totalDuration = sessions.reduce((acc, s) => acc + s.durationSeconds, 0);
-    const totalReps = sessions.reduce((acc, s) => acc + s.reps, 0);
-    const globalSER = totalDuration > 3600 ? (totalReps / (totalDuration / 3600)) : 0;
+    const weeklyReps = getTotalReps(weeklySessions);
+    const totalDuration = getTotalDuration(sessions);
+    const totalReps = getTotalReps(sessions);
+    const globalSER = calculateSER(totalReps, totalDuration, 3600);
     const daysSober = differenceInDays(todayDate, parseISO(settings.substanceFreeStartDate));
     const dailyGoalSeconds = (settings.dailyTimeGoalHours || 4) * 3600;
     const volumeProgress = Math.min((todayDuration / dailyGoalSeconds) * 100, 100);
@@ -216,14 +215,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     };
   }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours]);
 
-  const formatTimeFull = (secs: number) => {
-    const absSecs = Math.abs(secs);
-    const h = Math.floor(absSecs / 3600);
-    const m = Math.floor((absSecs % 3600) / 60);
-    const s = Math.floor(absSecs % 60);
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   const getBalanceColor = (logged: number, goal: number) => {
     if (logged > goal) return 'text-emerald-500'; // Exceeded goal
     if (logged > 0) return 'text-white'; // Making progress
@@ -239,16 +230,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
        const diff = differenceInDays(now, d);
        return diff < 7 && diff >= 0;
     });
-    const totalReps7Days = last7DaysSessions.reduce((acc, s) => acc + s.reps, 0);
+    const totalReps7Days = getTotalReps(last7DaysSessions);
     const avgReps7Days = totalReps7Days > 0 ? totalReps7Days / 7 : 0;
 
     for (let i = 6; i >= 0; i--) {
       const d = subDays(now, i);
-      const offset = d.getTimezoneOffset();
-      const localD = new Date(d.getTime() - (offset * 60 * 1000));
-      const dateStr = localD.toISOString().split('T')[0];
-      const daySessions = sessions.filter(s => s.date === dateStr);
-      const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
+      const dateStr = dateToLocalString(d);
+      const daySessions = getSessionsByDate(sessions, dateStr);
+      const reps = getTotalReps(daySessions);
       data.push({
         day: format(d, 'EEE'),
         reps: reps,

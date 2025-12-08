@@ -1,5 +1,6 @@
 
 import { Session, UserSettings, DEFAULT_SETTINGS, SyncQueueItem } from '../types';
+import { getLocalDate } from '../utils/dateUtils';
 
 const STORAGE_KEYS = {
   SESSIONS: 'highbeta_sessions',
@@ -10,13 +11,8 @@ const STORAGE_KEYS = {
 
 export const CURRENT_VERSION = '1.3';
 
-// UTILITY: Get Local YYYY-MM-DD
-export const getLocalDate = (): string => {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - (offset * 60 * 1000));
-  return local.toISOString().split('T')[0];
-};
+// Re-export for backward compatibility
+export { getLocalDate };
 
 export const getSessions = (): Session[] => {
   try {
@@ -105,6 +101,28 @@ export const importDataJSON = (jsonString: string): boolean => {
 
 // --- CLOUD SYNC LOGIC ---
 
+/**
+ * Type for Google Sheets sync payload
+ * Can be a Session or a test ping payload
+ */
+type GoogleSheetsPayload = Session | { id: string; notes: string };
+
+/**
+ * Helper function to make a POST request to Google Sheets
+ * @param url - Google Apps Script Web App URL
+ * @param payload - Data to send (Session or test payload)
+ */
+const postToGoogleSheets = async (url: string, payload: GoogleSheetsPayload): Promise<void> => {
+  await fetch(url, {
+    method: 'POST',
+    mode: 'no-cors', // Google Apps Script Web App requests usually require 'no-cors' mode
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+  });
+};
+
 const getSyncQueue = (): SyncQueueItem[] => {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
@@ -118,16 +136,7 @@ const saveSyncQueue = (queue: SyncQueueItem[]) => {
 
 export const syncToGoogleSheets = async (session: Session, url: string) => {
   try {
-    // Google Apps Script Web App requests usually require 'no-cors' mode 
-    // or properly configured CORS headers on the script side.
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors', 
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(session)
-    });
+    await postToGoogleSheets(url, session);
     console.log("Sync request sent");
   } catch (e) {
     console.error("Sync failed, adding to queue", e);
@@ -145,14 +154,7 @@ export const syncToGoogleSheets = async (session: Session, url: string) => {
 export const testCloudConnection = async (url: string): Promise<boolean> => {
   try {
     // Send a dummy PING payload to verify connectivity
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id: 'PING', notes: 'Connection Test' })
-    });
+    await postToGoogleSheets(url, { id: 'PING', notes: 'Connection Test' });
     // Since 'no-cors' hides the status, we rely on lack of network error
     // To truly verify, the user must check their sheet, but this confirms the request left the browser.
     return true;
@@ -173,12 +175,7 @@ export const processSyncQueue = async () => {
 
   for (const item of queue) {
     try {
-      await fetch(settings.googleSheetsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item.session)
-      });
+      await postToGoogleSheets(settings.googleSheetsUrl, item.session);
       console.log(`Processed queue item ${item.id}`);
     } catch (e) {
       // Keep in queue if it fails again
