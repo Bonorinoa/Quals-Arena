@@ -158,7 +158,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
                       </tr>
                       <tr className="border-b border-zinc-800/50">
                         <td className="py-3 px-4 text-zinc-400 text-xs">Mobile Tip</td>
-                        <td className="py-3 px-4 text-right text-zinc-500 text-xs" colspan="2">
+                        <td className="py-3 px-4 text-right text-zinc-500 text-xs" colSpan={2}>
                           Add to Home Screen for fullscreen experience
                         </td>
                       </tr>
