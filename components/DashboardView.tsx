@@ -185,10 +185,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const getNetPositionColor = (secs: number) => {
-    if (secs < 0) return 'text-red-500';
-    if (secs > 0) return 'text-emerald-500';
-    return 'text-white';
+  const getBalanceColor = (logged: number, goal: number) => {
+    if (logged > goal) return 'text-emerald-500'; // Exceeded goal
+    if (logged > 0) return 'text-white'; // Making progress
+    return 'text-zinc-600'; // No progress yet
   };
 
   // Chart Data
@@ -240,14 +240,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
               <div className="flex items-center gap-4 px-6 py-3 border-b sm:border-b-0 sm:border-r border-zinc-800 w-full sm:w-auto justify-center">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono flex items-center gap-1 mb-1">
-                      <Scale size={10} /> Contract Balance
+                      <Scale size={10} /> Daily Progress
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-xl font-mono font-bold ${getNetPositionColor(stats.today.netPositionSeconds)}`}>
-                        {stats.today.netPositionSeconds < 0 ? '-' : (stats.today.netPositionSeconds > 0 ? '+' : '')}
-                        {formatTimeFull(stats.today.netPositionSeconds)} 
+                      <span className={`text-xl font-mono font-bold ${getBalanceColor(stats.today.durationSeconds, stats.timeBudget.goalSeconds)}`}>
+                        {stats.today.durationSeconds > stats.timeBudget.goalSeconds ? '+' : ''}
+                        {formatTimeFull(stats.today.durationSeconds)} 
                       </span>
-                      <span className="text-zinc-600 text-sm font-mono">/ {settings.dailyTimeGoalHours}:00:00</span>
+                      <span className="text-zinc-600 text-sm font-mono">/ {formatTimeFull(settings.dailyTimeGoalHours * 3600)}</span>
                     </div>
                     <div className="w-40 h-1 bg-zinc-800 mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
                        <div className="h-full bg-zinc-400 transition-all duration-500" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
