@@ -11,7 +11,7 @@ import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
 import { 
   differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays, 
-  startOfMonth, endOfMonth, eachDayOfInterval, getDay, addDays
+  startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
 
