@@ -101,6 +101,22 @@ export const importDataJSON = (jsonString: string): boolean => {
 
 // --- CLOUD SYNC LOGIC ---
 
+/**
+ * Helper function to make a POST request to Google Sheets
+ * @param url - Google Apps Script Web App URL
+ * @param payload - Data to send
+ */
+const postToGoogleSheets = async (url: string, payload: any): Promise<void> => {
+  await fetch(url, {
+    method: 'POST',
+    mode: 'no-cors', // Google Apps Script Web App requests usually require 'no-cors' mode
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+  });
+};
+
 const getSyncQueue = (): SyncQueueItem[] => {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
@@ -114,16 +130,7 @@ const saveSyncQueue = (queue: SyncQueueItem[]) => {
 
 export const syncToGoogleSheets = async (session: Session, url: string) => {
   try {
-    // Google Apps Script Web App requests usually require 'no-cors' mode 
-    // or properly configured CORS headers on the script side.
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors', 
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(session)
-    });
+    await postToGoogleSheets(url, session);
     console.log("Sync request sent");
   } catch (e) {
     console.error("Sync failed, adding to queue", e);
@@ -141,14 +148,7 @@ export const syncToGoogleSheets = async (session: Session, url: string) => {
 export const testCloudConnection = async (url: string): Promise<boolean> => {
   try {
     // Send a dummy PING payload to verify connectivity
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id: 'PING', notes: 'Connection Test' })
-    });
+    await postToGoogleSheets(url, { id: 'PING', notes: 'Connection Test' });
     // Since 'no-cors' hides the status, we rely on lack of network error
     // To truly verify, the user must check their sheet, but this confirms the request left the browser.
     return true;
@@ -169,12 +169,7 @@ export const processSyncQueue = async () => {
 
   for (const item of queue) {
     try {
-      await fetch(settings.googleSheetsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item.session)
-      });
+      await postToGoogleSheets(settings.googleSheetsUrl, item.session);
       console.log(`Processed queue item ${item.id}`);
     } catch (e) {
       // Keep in queue if it fails again
