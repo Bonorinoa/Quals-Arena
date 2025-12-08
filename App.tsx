@@ -61,7 +61,7 @@ export default function App() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "d1_protocol_data.csv");
+    link.setAttribute("download", "highbeta_data.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -73,7 +73,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `d1_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `highbeta_backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -119,7 +119,7 @@ export default function App() {
       <nav className="fixed top-0 left-0 right-0 h-16 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-50 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-white rotate-45"></div>
-          <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">D1 PROTOCOL</span>
+          <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">HIGHβ</span>
         </div>
         
         <div className="flex gap-2">
