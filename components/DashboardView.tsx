@@ -9,11 +9,12 @@ import {
 } from 'lucide-react';
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
+import { NetPositionCard } from './NetPositionCard';
 import { 
   differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays, 
   startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
-import { getLocalDate } from '../services/storage';
+import { getLocalDate, calculateNetPositionMetrics, calculatePenalty, getSessionNetPosition } from '../services/storage';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -153,10 +154,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const todayReps = todaySessions.reduce((acc, s) => acc + s.reps, 0);
     const todayHours = todayDuration / 3600;
 
-    const todayNetPosition = todaySessions.reduce((acc, s) => {
-      const target = s.targetDurationSeconds ?? s.durationSeconds;
-      return acc + (s.durationSeconds - target);
-    }, 0);
+    const todayNetPosition = todaySessions.reduce((acc, s) => 
+      acc + getSessionNetPosition(s), 0
+    );
     
     const MIN_DURATION_FOR_SER = 300; 
     const todaySER = todayDuration > MIN_DURATION_FOR_SER ? (todayReps / todayHours) : 0;
@@ -182,6 +182,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const dailyGoalSeconds = (settings.dailyTimeGoalHours || 4) * 3600;
     const volumeProgress = Math.min((todayDuration / dailyGoalSeconds) * 100, 100);
 
+    // Calculate net position metrics
+    const netPositionMetrics = calculateNetPositionMetrics(sessions);
+    const penaltyCalc = calculatePenalty(netPositionMetrics.totalOwedSeconds);
+
     return {
       today: { 
         reps: todayReps, 
@@ -201,7 +205,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       timeBudget: {
         goalSeconds: dailyGoalSeconds,
         volumeProgress: volumeProgress,
-      }
+      },
+      netPosition: netPositionMetrics,
+      penalty: penaltyCalc
     };
   }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours]);
 
@@ -288,6 +294,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                  </div>
               </div>
 
+              {/* Net Position Card */}
+              <NetPositionCard metrics={stats.netPosition} penalty={stats.penalty} />
+
               <div className="flex items-center gap-6 px-4 py-3 sm:py-0 w-full sm:w-auto justify-between sm:justify-start">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono mb-1">Signal Integrity</span>
@@ -364,6 +373,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                  {targetMet ? <span className="text-emerald-500">FOUNDER MODE UNLOCKED</span> : <span className="text-zinc-500">EMPLOYEE MODE</span>}
                </h3>
                <p className="text-xs text-zinc-400 font-mono">{targetMet ? "Weekly Variance Positive. Chaos Authorized." : `Target Deficit: ${settings.weeklyRepTarget - stats.weeklyReps} Reps.`}</p>
+            </div>
+
+            {/* SATURDAY UNLOCK & PENALTY */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`p-6 border transition-colors ${
+                stats.netPosition.isSaturdayUnlocked 
+                  ? 'border-emerald-900/30 bg-emerald-950/10' 
+                  : 'border-red-900/30 bg-red-950/10'
+              }`}>
+                <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
+                  {stats.netPosition.isSaturdayUnlocked ? (
+                    <><ShieldCheck size={16} className="text-emerald-500" /><span className="text-emerald-500">Saturday Chaos Mode</span></>
+                  ) : (
+                    <><AlertOctagon size={16} className="text-red-500" /><span className="text-red-500">Saturday Locked</span></>
+                  )}
+                </h3>
+                <p className="text-xs text-zinc-400 font-mono mb-2">
+                  {new Date().getDay() === 6 
+                    ? (stats.netPosition.isSaturdayUnlocked 
+                        ? "Net position positive by Friday. Weekend mode enabled." 
+                        : "Average deficit by Friday. Weekend mode restricted.")
+                    : "Unlock Saturday by maintaining positive average net position through Friday."}
+                </p>
+                <div className="text-[10px] text-zinc-500 font-mono">
+                  Friday Avg: {stats.netPosition.fridayNetPositionSeconds >= 0 ? '+' : ''}{Math.floor(stats.netPosition.fridayNetPositionSeconds / 60)}m
+                </div>
+              </div>
+
+              <div className={`p-6 border transition-colors ${
+                stats.penalty.totalMinutesOwed > 0 
+                  ? 'border-red-900/30 bg-red-950/10' 
+                  : 'border-emerald-900/30 bg-emerald-950/10'
+              }`}>
+                <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
+                  <Scale size={16} className={stats.penalty.totalMinutesOwed > 0 ? 'text-red-500' : 'text-emerald-500'} />
+                  <span className={stats.penalty.totalMinutesOwed > 0 ? 'text-red-500' : 'text-emerald-500'}>
+                    Weekly Penalty
+                  </span>
+                </h3>
+                <p className="text-xs text-zinc-400 font-mono mb-2">
+                  {stats.penalty.description}
+                </p>
+                {stats.penalty.totalMinutesOwed > 0 && (
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <span className="text-2xl font-mono font-bold text-red-400">
+                      ${stats.penalty.penaltyAmount}
+                    </span>
+                    <span className="text-xs text-zinc-600 font-mono">
+                      ({stats.penalty.totalMinutesOwed}m owed)
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* SESSION LEDGER */}

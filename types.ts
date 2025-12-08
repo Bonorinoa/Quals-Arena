@@ -23,6 +23,22 @@ export interface DailyStats {
   totalDuration: number;
   totalReps: number;
   ser: number; // Sober Efficiency Rate (Reps / Hour)
+  netPositionSeconds: number; // Net Position for the day (actual - committed)
+}
+
+export interface NetPositionMetrics {
+  todayNetPositionSeconds: number;
+  weeklyNetPositionSeconds: number;
+  weeklyAverageNetPositionSeconds: number;
+  fridayNetPositionSeconds: number; // For Saturday unlock check
+  isSaturdayUnlocked: boolean; // Based on Friday's average
+  totalOwedSeconds: number; // Total deficit for penalty calculation
+}
+
+export interface PenaltyCalculation {
+  totalMinutesOwed: number;
+  penaltyAmount: number; // Mock amount in dollars
+  description: string;
 }
 
 export interface SyncQueueItem {
