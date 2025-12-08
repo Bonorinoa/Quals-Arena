@@ -16,7 +16,7 @@ import {
 import { getLocalDate } from '../services/storage';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
-import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER } from '../utils/sessionUtils';
+import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS } from '../utils/sessionUtils';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -169,15 +169,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       return acc + (s.durationSeconds - target);
     }, 0);
     
-    const MIN_DURATION_FOR_SER = 300; 
-    const todaySER = calculateSER(todayReps, todayDuration, MIN_DURATION_FOR_SER);
-    const isTodayNoise = todayDuration > 0 && todayDuration <= MIN_DURATION_FOR_SER;
+    const todaySER = calculateSER(todayReps, todayDuration, MIN_DURATION_THRESHOLD_SECONDS);
+    const isTodayNoise = todayDuration > 0 && todayDuration <= MIN_DURATION_THRESHOLD_SECONDS;
 
     const yesterdaySessions = getSessionsByDate(sessions, yesterdayStr);
     const yesterdayDuration = getTotalDuration(yesterdaySessions);
     const yesterdayReps = getTotalReps(yesterdaySessions);
     const yesterdayHours = yesterdayDuration / 3600;
-    const yesterdaySER = calculateSER(yesterdayReps, yesterdayDuration, MIN_DURATION_FOR_SER);
+    const yesterdaySER = calculateSER(yesterdayReps, yesterdayDuration, MIN_DURATION_THRESHOLD_SECONDS);
 
     const start = startOfWeek(todayDate, { weekStartsOn: 1 });
     const end = endOfWeek(todayDate, { weekStartsOn: 1 });

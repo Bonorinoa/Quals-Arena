@@ -102,11 +102,17 @@ export const importDataJSON = (jsonString: string): boolean => {
 // --- CLOUD SYNC LOGIC ---
 
 /**
+ * Type for Google Sheets sync payload
+ * Can be a Session or a test ping payload
+ */
+type GoogleSheetsPayload = Session | { id: string; notes: string };
+
+/**
  * Helper function to make a POST request to Google Sheets
  * @param url - Google Apps Script Web App URL
- * @param payload - Data to send
+ * @param payload - Data to send (Session or test payload)
  */
-const postToGoogleSheets = async (url: string, payload: any): Promise<void> => {
+const postToGoogleSheets = async (url: string, payload: GoogleSheetsPayload): Promise<void> => {
   await fetch(url, {
     method: 'POST',
     mode: 'no-cors', // Google Apps Script Web App requests usually require 'no-cors' mode
