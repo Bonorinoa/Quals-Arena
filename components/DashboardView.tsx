@@ -10,7 +10,8 @@ import {
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
 import { 
-  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays 
+  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays,
+  startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
 
@@ -71,16 +72,30 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
   );
 };
 
-// HEATMAP COMPONENT
+// HEATMAP COMPONENT - Monthly Calendar View
 const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
-   const days = useMemo(() => {
-      const result = [];
+   const calendarData = useMemo(() => {
       const today = new Date();
-      // Generate last 60 days
-      for (let i = 59; i >= 0; i--) {
-         const d = subDays(today, i);
-         const dateStr = d.toISOString().split('T')[0]; 
-         
+      const monthStart = startOfMonth(today);
+      const monthEnd = endOfMonth(today);
+      
+      // Get all days in the current month
+      const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      
+      // Calculate padding for the start of the month (to align with week grid)
+      const firstDayOfWeek = getDay(monthStart); // 0 = Sunday, 1 = Monday, etc.
+      const startPadding = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert to Monday = 0
+      
+      const result = [];
+      
+      // Add empty cells for padding (previous month days)
+      for (let i = 0; i < startPadding; i++) {
+         result.push({ date: '', intensity: 'bg-transparent', reps: 0, isEmpty: true });
+      }
+      
+      // Add actual days of the month
+      for (const day of daysInMonth) {
+         const dateStr = day.toISOString().split('T')[0];
          const daySessions = sessions.filter(s => s.date === dateStr);
          const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
          
@@ -88,21 +103,42 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
          if (reps > 0) intensity = 'bg-emerald-900/40';
          if (reps > 5) intensity = 'bg-emerald-700/60';
          if (reps > 15) intensity = 'bg-emerald-500';
-
-         result.push({ date: dateStr, intensity, reps });
+         
+         result.push({ 
+            date: dateStr, 
+            intensity, 
+            reps, 
+            dayOfMonth: day.getDate(),
+            isEmpty: false 
+         });
       }
-      return result;
+      
+      return { days: result, monthName: format(today, 'MMMM yyyy') };
    }, [sessions]);
 
    return (
-      <div className="flex flex-wrap gap-1 w-full justify-start">
-         {days.map((d) => (
-            <div 
-               key={d.date} 
-               title={`${d.date}: ${d.reps} reps`}
-               className={`w-2 h-2 rounded-sm ${d.intensity} hover:border hover:border-white/50 transition-all cursor-help`}
-            />
-         ))}
+      <div>
+         <div className="text-[10px] text-zinc-600 font-mono mb-2 flex items-center justify-between">
+            <span className="uppercase tracking-wider">{calendarData.monthName}</span>
+            <div className="flex gap-3 text-[9px]">
+               <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+            </div>
+         </div>
+         <div className="grid grid-cols-7 gap-1 w-full">
+            {calendarData.days.map((d, idx) => (
+               <div 
+                  key={`${d.date}-${idx}`}
+                  title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
+                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 transition-all cursor-help'} relative group`}
+               >
+                  {!d.isEmpty && (
+                     <span className="absolute inset-0 flex items-center justify-center text-[8px] text-zinc-500 group-hover:text-white font-mono transition-colors">
+                        {d.dayOfMonth}
+                     </span>
+                  )}
+               </div>
+            ))}
+         </div>
       </div>
    );
 };
@@ -283,7 +319,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             {/* HEATMAP LEDGER */}
             <div className="p-6 border border-zinc-800 bg-zinc-950/50">
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Grid size={12} /> Consistency Grid (60d)
+                  <Grid size={12} /> Monthly Consistency Grid
                </div>
                <ConsistencyGrid sessions={sessions} />
             </div>
