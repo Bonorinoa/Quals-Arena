@@ -14,8 +14,13 @@ export const CURRENT_VERSION = '1.3';
 // UTILITY: Get Local YYYY-MM-DD
 export const getLocalDate = (): string => {
   const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - (offset * 60 * 1000));
+  return dateToLocalDateString(now);
+};
+
+// UTILITY: Convert Date to Local YYYY-MM-DD string
+const dateToLocalDateString = (date: Date): string => {
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - (offset * 60 * 1000));
   return local.toISOString().split('T')[0];
 };
 
@@ -258,9 +263,7 @@ export const calculateNetPositionMetrics = (sessions: Session[]): NetPositionMet
     fridayDate = todayDate;
   }
   
-  const offset = fridayDate.getTimezoneOffset();
-  const localFriday = new Date(fridayDate.getTime() - (offset * 60 * 1000));
-  const fridayStr = localFriday.toISOString().split('T')[0];
+  const fridayStr = dateToLocalDateString(fridayDate);
   
   // Get all sessions up to and including Friday for average calculation
   const fridayWeekStart = startOfWeek(fridayDate, { weekStartsOn: 1 });
@@ -277,7 +280,8 @@ export const calculateNetPositionMetrics = (sessions: Session[]): NetPositionMet
   const avgUpToFriday = daysUpToFriday > 0 ? netPositionUpToFriday / daysUpToFriday : 0;
   
   // Saturday is unlocked if average net position by Friday night is positive
-  const isSaturdayUnlocked = currentDay === 6 ? avgUpToFriday > 0 : false;
+  // Show unlock status on all days (not just Saturday) so users can plan ahead
+  const isSaturdayUnlocked = avgUpToFriday > 0;
   
   // Calculate total owed (only negative positions)
   const totalOwedSeconds = weeklySessions.reduce((acc, s) => {

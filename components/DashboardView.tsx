@@ -14,7 +14,7 @@ import {
   differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays, 
   startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
-import { getLocalDate, calculateNetPositionMetrics, calculatePenalty } from '../services/storage';
+import { getLocalDate, calculateNetPositionMetrics, calculatePenalty, getSessionNetPosition } from '../services/storage';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -154,10 +154,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const todayReps = todaySessions.reduce((acc, s) => acc + s.reps, 0);
     const todayHours = todayDuration / 3600;
 
-    const todayNetPosition = todaySessions.reduce((acc, s) => {
-      const target = s.targetDurationSeconds ?? s.durationSeconds;
-      return acc + (s.durationSeconds - target);
-    }, 0);
+    const todayNetPosition = todaySessions.reduce((acc, s) => 
+      acc + getSessionNetPosition(s), 0
+    );
     
     const MIN_DURATION_FOR_SER = 300; 
     const todaySER = todayDuration > MIN_DURATION_FOR_SER ? (todayReps / todayHours) : 0;
