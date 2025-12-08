@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, Square, Save, AlertCircle, ArrowRight, Target, ShieldAlert, Quote, Zap, Thermometer } from 'lucide-react';
+import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, Thermometer, Wind } from 'lucide-react';
 import { Session } from '../types';
 import { getLocalDate } from '../services/storage';
 
@@ -8,7 +9,8 @@ interface TimerViewProps {
   onCancel: () => void;
 }
 
-type TimerMode = 'SETUP' | 'WARMUP' | 'RUNNING' | 'LOGGING';
+// Extended state machine for the sequential flow
+type TimerMode = 'SETUP_DURATION' | 'SETUP_WARMUP' | 'WARMUP' | 'RUNNING' | 'LOGGING';
 
 const ANCHORS = [
   { title: "THE SIGNAL EXTRACTION", text: "\"High stimulation is just high variance.\" You cannot regress on a noisy variable." },
@@ -22,7 +24,7 @@ const ANCHORS = [
 ];
 
 export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCancel }) => {
-  const [mode, setMode] = useState<TimerMode>('SETUP');
+  const [mode, setMode] = useState<TimerMode>('SETUP_DURATION');
   const [isActive, setIsActive] = useState(false);
   
   // Timer State
@@ -36,7 +38,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Warm Up State
-  const [warmUpDuration, setWarmUpDuration] = useState(0); // 0, 60, 180...
+  const [warmUpDuration, setWarmUpDuration] = useState(0); 
   const [warmUpSecondsLeft, setWarmUpSecondsLeft] = useState(0);
 
   // Log form state
@@ -55,7 +57,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   ];
 
   const WARMUPS = [
-    { label: 'None', value: 0 },
+    { label: 'Skip', value: 0 },
     { label: '1m', value: 60 },
     { label: '3m', value: 180 },
     { label: '5m', value: 300 },
@@ -117,7 +119,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         const now = Date.now();
         const delta = Math.floor((now - (startTimeRef.current || now)) / 1000);
         setSeconds(accumulatedTimeRef.current + delta);
-      }, 200); // Check frequently, but math ensures accuracy
+      }, 200); 
     } else if (mode === 'WARMUP' && warmUpSecondsLeft > 0) {
        interval = window.setInterval(() => {
          setWarmUpSecondsLeft((prev) => {
@@ -138,9 +140,18 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
     };
   }, [isActive, mode, warmUpSecondsLeft]);
 
-  const initiateSequence = () => {
-    if (warmUpDuration > 0) {
-      setWarmUpSecondsLeft(warmUpDuration);
+  // FLOW HANDLERS
+
+  const handleSelectDuration = (seconds: number) => {
+    setTargetSeconds(seconds);
+    // Smooth transition delay
+    setTimeout(() => setMode('SETUP_WARMUP'), 200);
+  };
+
+  const handleSelectWarmup = (seconds: number) => {
+    setWarmUpDuration(seconds);
+    if (seconds > 0) {
+      setWarmUpSecondsLeft(seconds);
       setMode('WARMUP');
     } else {
       setMode('RUNNING');
@@ -216,94 +227,113 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   };
 
   // ----------------------------------------------------------------------
-  // VIEW: SETUP
+  // VIEW: STEP 1 - DURATION
   // ----------------------------------------------------------------------
-  if (mode === 'SETUP') {
+  if (mode === 'SETUP_DURATION') {
     return (
-       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in zoom-in-95 duration-300">
-        <div className="w-full bg-zinc-900/50 border border-zinc-800 p-8 space-y-8 relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/20"></div>
-           
-           <div>
-              <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-4 font-mono flex items-center gap-2">
-                <Target size={14} />
-                Commitment Duration
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                 {DURATIONS.map((opt) => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setTargetSeconds(opt.value)}
-                      className={`py-4 font-mono text-sm border transition-all ${
-                        targetSeconds === opt.value 
-                        ? 'bg-white text-black border-white font-bold' 
-                        : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-600'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                 ))}
-              </div>
-           </div>
+       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-in slide-in-from-bottom-8 fade-in duration-700">
+         <h2 className="text-zinc-500 font-mono text-xs uppercase tracking-[0.2em] mb-12 flex items-center gap-2">
+            <Target size={14} /> Phase 1: Commitment
+         </h2>
+         
+         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full">
+            {DURATIONS.map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => handleSelectDuration(opt.value)}
+                className="group relative overflow-hidden bg-zinc-900/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/50 p-8 rounded-xl transition-all duration-300 hover:bg-zinc-800/60 active:scale-95"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all" />
+                <span className="text-2xl font-mono text-zinc-300 group-hover:text-white font-bold">{opt.label}</span>
+              </button>
+            ))}
+         </div>
 
-           <div>
-              <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-4 font-mono flex items-center gap-2">
-                <Thermometer size={14} />
-                Cognitive Ramp-Up (Warm Up)
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                 {WARMUPS.map((opt) => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setWarmUpDuration(opt.value)}
-                      className={`py-2 font-mono text-xs border transition-all ${
-                        warmUpDuration === opt.value 
-                        ? 'bg-zinc-800 text-white border-zinc-600' 
-                        : 'bg-zinc-950 text-zinc-600 border-zinc-900 hover:border-zinc-700'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                 ))}
-              </div>
-           </div>
-
-           <div className="flex gap-4 pt-4 border-t border-zinc-800/50">
-             <button onClick={onCancel} className="flex-1 py-4 text-zinc-500 font-mono text-xs uppercase tracking-widest hover:text-white">
-               Abort
-             </button>
-             <button 
-               onClick={initiateSequence}
-               className="flex-[2] py-4 bg-emerald-900/20 text-emerald-500 border border-emerald-900/50 hover:bg-emerald-900/40 font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all"
-             >
-               Seal Contract <ArrowRight size={16} />
-             </button>
-           </div>
-        </div>
+         <button onClick={onCancel} className="mt-16 text-zinc-600 hover:text-zinc-400 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-colors">
+            <ArrowLeft size={14} /> Abort Protocol
+         </button>
        </div>
     );
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: WARM UP
+  // VIEW: STEP 2 - WARMUP SELECTION
+  // ----------------------------------------------------------------------
+  if (mode === 'SETUP_WARMUP') {
+    return (
+       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-in slide-in-from-bottom-8 fade-in duration-700">
+         <h2 className="text-cyan-500/70 font-mono text-xs uppercase tracking-[0.2em] mb-12 flex items-center gap-2">
+            <Thermometer size={14} /> Phase 2: Calibration
+         </h2>
+         
+         <p className="text-zinc-400 text-center max-w-md mb-12 font-light text-lg">
+           Do you need to clear cognitive noise before the clock starts?
+         </p>
+
+         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+            {WARMUPS.map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => handleSelectWarmup(opt.value)}
+                className={`group relative overflow-hidden backdrop-blur-md border p-6 rounded-xl transition-all duration-300 active:scale-95 ${
+                  opt.value === 0 
+                  ? 'bg-zinc-900/40 border-white/5 hover:border-zinc-500' 
+                  : 'bg-cyan-950/10 border-cyan-500/10 hover:border-cyan-400/50 hover:bg-cyan-900/20'
+                }`}
+              >
+                <span className={`text-xl font-mono font-bold ${opt.value === 0 ? 'text-zinc-400' : 'text-cyan-200'}`}>
+                  {opt.label}
+                </span>
+              </button>
+            ))}
+         </div>
+
+         <button onClick={() => setMode('SETUP_DURATION')} className="mt-16 text-zinc-600 hover:text-zinc-400 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-colors">
+            <ArrowLeft size={14} /> Back
+         </button>
+       </div>
+    );
+  }
+
+  // ----------------------------------------------------------------------
+  // VIEW: WARM UP (THE BREATHING ROOM)
   // ----------------------------------------------------------------------
   if (mode === 'WARMUP') {
      return (
-        <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in fade-in duration-500">
-           <div className="text-zinc-500 font-mono text-sm uppercase tracking-widest mb-8 animate-pulse">
-              Cognitive Ramp-Up
+        <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full animate-in fade-in duration-1000 overflow-hidden">
+           {/* Breathing Background Animation */}
+           <style>{`
+             @keyframes deep-breathe {
+               0%, 100% { transform: scale(1); opacity: 0.3; }
+               50% { transform: scale(1.3); opacity: 0.6; }
+             }
+             .animate-deep-breathe { animation: deep-breathe 8s infinite ease-in-out; }
+           `}</style>
+
+           {/* The Void Background */}
+           <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+              <div className="w-[60vh] h-[60vh] rounded-full bg-cyan-900/30 blur-[120px] animate-deep-breathe"></div>
            </div>
-           <div className="text-8xl font-mono text-zinc-700 font-bold">
-              {Math.floor(warmUpSecondsLeft / 60)}:{(warmUpSecondsLeft % 60).toString().padStart(2, '0')}
+
+           <div className="relative z-10 flex flex-col items-center">
+              <div className="text-cyan-500/50 font-mono text-xs uppercase tracking-[0.3em] mb-12 flex items-center gap-2">
+                  <Wind size={14} /> Decompression
+              </div>
+              
+              <div className="text-8xl sm:text-9xl font-mono text-cyan-100/90 font-bold tracking-tighter tabular-nums drop-shadow-2xl">
+                  {Math.floor(warmUpSecondsLeft / 60)}:{(warmUpSecondsLeft % 60).toString().padStart(2, '0')}
+              </div>
+
+              <div className="mt-16 text-cyan-200/50 text-sm font-mono max-w-xs text-center leading-relaxed">
+                  "Sit in the void.<br/>Let the noise settle."
+              </div>
            </div>
-           <div className="mt-8 text-zinc-600 text-xs font-mono max-w-xs text-center">
-              "Sit in the void. Let the cello carry the weight."
-           </div>
+           
            <button 
              onClick={handleSkipWarmup}
-             className="mt-12 text-zinc-800 hover:text-zinc-500 text-xs uppercase tracking-widest"
+             className="absolute bottom-12 z-20 text-zinc-600 hover:text-cyan-400 text-[10px] uppercase tracking-widest transition-colors"
            >
-             Skip Warmup
+             Skip Calibration
            </button>
         </div>
      );
@@ -315,22 +345,23 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   if (mode === 'LOGGING') {
     const deficitMinutes = (targetSeconds - seconds) / 60;
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in fade-in duration-300 overflow-y-auto">
-        <div className="w-full bg-zinc-900 border border-zinc-800 p-8">
-          <h2 className="text-2xl font-bold mb-6 text-zinc-100 font-mono border-b border-zinc-800 pb-4">
-            SESSION DEBRIEF
+      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in slide-in-from-bottom-8 duration-500 overflow-y-auto">
+        <div className="w-full bg-zinc-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl">
+          <h2 className="text-xl font-bold mb-8 text-zinc-200 font-mono border-b border-white/5 pb-4 tracking-wider flex items-center justify-between">
+            <span>SESSION LOG</span>
+            <span className="text-[10px] text-zinc-500 uppercase">Saving to Local Node</span>
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">Duration (Asset Built)</label>
+              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">Asset Value (Time)</label>
               <div className="flex items-baseline gap-3">
-                <div className="text-4xl font-mono text-zinc-100">{formatTime(seconds)}</div>
+                <div className="text-4xl font-mono text-white">{formatTime(seconds)}</div>
                 {seconds < targetSeconds ? (
-                   <div className="text-xs text-red-500 font-mono flex items-center gap-1">
+                   <div className="text-xs text-red-400 font-mono flex items-center gap-1 bg-red-950/30 px-2 py-1 rounded">
                       <ShieldAlert size={12} /> DEFICIT ({deficitMinutes.toFixed(2)}m)
                    </div>
                 ) : (
-                   <div className="text-xs text-emerald-500 font-mono flex items-center gap-1">
+                   <div className="text-xs text-emerald-400 font-mono flex items-center gap-1 bg-emerald-950/30 px-2 py-1 rounded">
                       <Zap size={12} /> SURPLUS (+{Math.abs(deficitMinutes).toFixed(2)}m)
                    </div>
                 )}
@@ -338,28 +369,29 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">Reps Completed</label>
+              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">Reps (Volume)</label>
               <input
                 type="number"
                 value={reps}
                 onChange={(e) => setReps(parseInt(e.target.value) || 0)}
-                className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-4 text-2xl font-mono focus:border-white outline-none"
+                className="w-full bg-black/40 border border-white/10 text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-colors"
                 autoFocus
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">Diagnostic Note</label>
+              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">Diagnostic Note</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 text-zinc-300 p-4 font-mono text-sm h-32 resize-none focus:border-white outline-none"
+                placeholder="What was the friction? What was the insight?"
+                className="w-full bg-black/40 border border-white/10 text-zinc-300 p-4 font-mono text-sm h-32 resize-none focus:border-white/30 outline-none rounded-lg transition-colors"
               />
             </div>
 
             <div className="pt-4 flex gap-4">
-               <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 border border-zinc-700 text-zinc-400 font-bold hover:bg-zinc-800 uppercase text-xs tracking-widest">Discard</button>
-               <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+               <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 border border-white/10 text-zinc-400 font-bold hover:bg-white/5 uppercase text-xs tracking-widest rounded-lg">Discard</button>
+               <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 uppercase text-xs tracking-widest flex items-center justify-center gap-2 rounded-lg shadow-lg shadow-white/10">
                  <Save size={16} /> {isSubmitting ? 'Minting...' : 'Log Asset'}
                </button>
             </div>
@@ -370,49 +402,59 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: RUNNING
+  // VIEW: RUNNING (THE ARENA)
   // ----------------------------------------------------------------------
   const progressPercent = Math.min((seconds / targetSeconds) * 100, 100);
   const isOvertime = seconds >= targetSeconds;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in zoom-in-95 duration-500">
-      <div className="mb-8 text-center space-y-2">
-        <h1 className="text-xl text-zinc-500 uppercase tracking-[0.3em] font-bold">The Arena</h1>
-        <div className="flex items-center justify-center gap-2 text-zinc-600 text-sm font-mono">
-          <Target size={14} /> Target: {formatTime(targetSeconds)}
+    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in zoom-in-95 duration-1000">
+      <div className="mb-12 text-center space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+        <h1 className="text-xs text-zinc-500 uppercase tracking-[0.4em] font-bold flex items-center justify-center gap-2">
+           <Zap size={12} /> The Arena
+        </h1>
+        <div className="flex items-center justify-center gap-2 text-zinc-500 text-[10px] font-mono">
+          <Target size={10} /> Contract: {formatTime(targetSeconds)}
         </div>
       </div>
       
-      <div className={`font-mono text-[12vw] sm:text-[8rem] leading-none tracking-tighter tabular-nums mb-8 transition-colors duration-500 ${
-        isActive ? (isOvertime ? 'text-emerald-500' : 'text-white') : 'text-zinc-600'
+      <div className={`font-mono text-[14vw] sm:text-[9rem] leading-none tracking-tighter tabular-nums mb-12 transition-all duration-500 drop-shadow-2xl ${
+        isActive ? (isOvertime ? 'text-emerald-400' : 'text-white') : 'text-zinc-600'
       }`}>
         {formatTime(seconds)}
       </div>
 
-      <div className="w-full max-w-md h-1 bg-zinc-900 mb-12 relative overflow-hidden">
-        <div className={`h-full transition-all duration-1000 ${isOvertime ? 'bg-emerald-500' : 'bg-white'}`} style={{ width: `${progressPercent}%` }} />
+      {/* Progress Line */}
+      <div className="w-full max-w-md h-px bg-zinc-800 mb-16 relative">
+        <div 
+          className={`absolute top-0 left-0 h-full transition-all duration-1000 ${isOvertime ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'}`} 
+          style={{ width: `${progressPercent}%` }} 
+        />
       </div>
 
-      <div className="flex gap-6">
-        <button onClick={togglePause} className={`w-20 h-20 rounded-full flex items-center justify-center border-2 transition-all ${
-            isActive ? 'border-zinc-700 text-zinc-500 hover:border-zinc-500' : 'border-emerald-900/50 text-emerald-500 bg-emerald-950/10'
+      <div className="flex gap-8">
+        <button onClick={togglePause} className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+            isActive 
+            ? 'border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400' 
+            : 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
         }`}>
-          {isActive ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
+          {isActive ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
         </button>
 
-        <button onClick={handleStopClick} className={`w-20 h-20 rounded-full flex items-center justify-center border-2 transition-all ${
-            stopConfirm ? 'border-red-500 bg-red-950/50 text-red-500 animate-pulse' : 'border-red-900/30 text-red-700 hover:bg-red-950/20'
+        <button onClick={handleStopClick} className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+            stopConfirm 
+            ? 'border-red-500 bg-red-950/30 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.2)]' 
+            : 'border-zinc-800 text-zinc-700 hover:bg-red-950/10 hover:border-red-900/50 hover:text-red-900'
         }`}>
-          {stopConfirm ? <span className="text-[10px] font-bold uppercase tracking-widest">Confirm</span> : <Square size={32} fill="currentColor" />}
+          {stopConfirm ? <span className="text-[10px] font-bold uppercase tracking-widest">End</span> : <Square size={24} fill="currentColor" />}
         </button>
       </div>
 
-      <div className="mt-16 max-w-lg text-center text-zinc-600 font-mono px-4">
-        <div className="flex items-center justify-center gap-2 mb-2 text-amber-900/60 uppercase text-[10px] tracking-widest font-bold">
+      <div className="mt-24 max-w-lg text-center px-6 opacity-40 hover:opacity-100 transition-opacity duration-500">
+        <div className="flex items-center justify-center gap-2 mb-3 text-amber-700/80 uppercase text-[10px] tracking-widest font-bold">
            <Quote size={10} /> {currentAnchor.title}
         </div>
-        <p className="text-xs italic leading-relaxed">{currentAnchor.text}</p>
+        <p className="text-sm font-mono text-zinc-400 leading-relaxed">"{currentAnchor.text}"</p>
       </div>
     </div>
   );
