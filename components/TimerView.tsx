@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, Thermometer, Wind } from 'lucide-react';
-import { Session } from '../types';
+import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, Thermometer, Wind, Brain, Send, X } from 'lucide-react';
+import { Session, MentalNote } from '../types';
 import { getLocalDate } from '../services/storage';
 
 interface TimerViewProps {
@@ -45,6 +45,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   const [reps, setReps] = useState<number>(0);
   const [notes, setNotes] = useState('');
   
+  // Stream (Mental Notes) State
+  const [mentalNotes, setMentalNotes] = useState<MentalNote[]>([]);
+  const [showStreamInput, setShowStreamInput] = useState(false);
+  const [currentStreamNote, setCurrentStreamNote] = useState('');
+  
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const DURATIONS = [
@@ -66,6 +71,21 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   useEffect(() => {
     setCurrentAnchor(ANCHORS[Math.floor(Math.random() * ANCHORS.length)]);
   }, []);
+
+  // Keyboard Shortcut for Mental Notes
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent triggering if modifier keys are pressed
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      
+      if (e.key.toLowerCase() === 'n' && mode === 'RUNNING' && !showStreamInput) {
+        e.preventDefault();
+        setShowStreamInput(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mode, showStreamInput]);
 
   // Screen Wake Lock
   useEffect(() => {
@@ -190,9 +210,22 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         setStopConfirm(true);
     } else {
         // Second Click: Log
+        // Note: We no longer consolidate logs automatically, we keep them structured.
         setMode('LOGGING');
         setStopConfirm(false);
     }
+  };
+
+  const handleStreamSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!currentStreamNote.trim()) return;
+
+      setMentalNotes(prev => [...prev, {
+        timestamp: seconds,
+        text: currentStreamNote
+      }]);
+      setCurrentStreamNote('');
+      setShowStreamInput(false);
   };
 
   const handleSave = () => {
@@ -213,6 +246,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
       targetDurationSeconds: targetSeconds,
       reps: reps,
       notes: notes,
+      mentalNotes: mentalNotes, // Save the structured array
       date: getLocalDate()
     };
     
@@ -379,6 +413,23 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
               />
             </div>
 
+            {/* THE STREAM RECEIPT */}
+            {mentalNotes.length > 0 && (
+              <div className="bg-cyan-950/10 border border-cyan-500/20 rounded-lg p-4">
+                 <label className="block text-[10px] uppercase tracking-widest text-cyan-500/70 mb-3 font-mono flex items-center gap-2">
+                   <Brain size={12} /> The Stream (Receipt)
+                 </label>
+                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                   {mentalNotes.map((note, idx) => (
+                     <div key={idx} className="flex gap-3 text-xs font-mono group">
+                        <span className="text-zinc-600 group-hover:text-cyan-500/70 transition-colors">[{formatTime(note.timestamp)}]</span>
+                        <span className="text-zinc-300">{note.text}</span>
+                     </div>
+                   ))}
+                 </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">Diagnostic Note</label>
               <textarea
@@ -408,7 +459,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   const isOvertime = seconds >= targetSeconds;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in zoom-in-95 duration-1000">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in zoom-in-95 duration-1000 relative">
       <div className="mb-12 text-center space-y-2 opacity-60 hover:opacity-100 transition-opacity">
         <h1 className="text-xs text-zinc-500 uppercase tracking-[0.4em] font-bold flex items-center justify-center gap-2">
            <Zap size={12} /> The Arena
@@ -432,23 +483,63 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         />
       </div>
 
-      <div className="flex gap-8">
-        <button onClick={togglePause} className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
-            isActive 
-            ? 'border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400' 
-            : 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-        }`}>
-          {isActive ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-        </button>
-
-        <button onClick={handleStopClick} className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+      {/* TACTILE TRIAD CONTROL */}
+      <div className="flex items-center gap-6 sm:gap-12 mt-8">
+        
+        {/* LEFT: STOP (The Brake) */}
+        <button onClick={handleStopClick} className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
             stopConfirm 
             ? 'border-red-500 bg-red-950/30 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.2)]' 
-            : 'border-zinc-800 text-zinc-700 hover:bg-red-950/10 hover:border-red-900/50 hover:text-red-900'
+            : 'border-zinc-800 text-zinc-600 hover:bg-red-950/10 hover:border-red-900/50 hover:text-red-900'
         }`}>
-          {stopConfirm ? <span className="text-[10px] font-bold uppercase tracking-widest">End</span> : <Square size={24} fill="currentColor" />}
+          {stopConfirm ? <span className="text-[10px] font-bold uppercase tracking-widest">End</span> : <Square size={20} fill="currentColor" />}
+        </button>
+
+        {/* CENTER: PLAY/PAUSE (The Engine) */}
+        <button onClick={togglePause} className={`w-24 h-24 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+            isActive 
+            ? 'border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300' 
+            : 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.15)]'
+        }`}>
+          {isActive ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+        </button>
+
+        {/* RIGHT: NOTE (The Stream) */}
+        <button 
+           onClick={() => setShowStreamInput(true)} 
+           className="group w-16 h-16 rounded-full flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-950/10 transition-all duration-300 backdrop-blur-sm" 
+           title="Capture Thought (N)"
+        >
+          <Brain size={20} className="group-hover:scale-110 transition-transform" />
         </button>
       </div>
+
+      {/* Stream Input Modal */}
+      {showStreamInput && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <form onSubmit={handleStreamSubmit} className="w-full max-w-md bg-zinc-900/90 border border-white/10 p-4 rounded-xl shadow-2xl animate-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center justify-between mb-4">
+               <span className="text-[10px] uppercase tracking-widest text-cyan-500/70 font-mono">The Stream // {formatTime(seconds)}</span>
+               <button type="button" onClick={() => setShowStreamInput(false)} className="text-zinc-500 hover:text-white">
+                 <X size={14} />
+               </button>
+            </div>
+            <div className="relative">
+              <input 
+                autoFocus
+                type="text" 
+                value={currentStreamNote}
+                onChange={(e) => setCurrentStreamNote(e.target.value)}
+                placeholder="Capture the thought..."
+                className="w-full bg-black/50 text-white p-3 pr-10 rounded-lg border border-zinc-700 focus:border-cyan-500/50 outline-none font-mono text-sm"
+              />
+              <button type="submit" className="absolute right-2 top-2 p-1 text-zinc-400 hover:text-cyan-400 transition-colors">
+                <Send size={14} />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="mt-24 max-w-lg text-center px-6 opacity-40 hover:opacity-100 transition-opacity duration-500">
         <div className="flex items-center justify-center gap-2 mb-3 text-amber-700/80 uppercase text-[10px] tracking-widest font-bold">

@@ -1,6 +1,5 @@
 
-import { Session, UserSettings, DEFAULT_SETTINGS, SyncQueueItem, NetPositionMetrics, PenaltyCalculation } from '../types';
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO, getDay, subDays } from 'date-fns';
+import { Session, UserSettings, DEFAULT_SETTINGS, SyncQueueItem } from '../types';
 
 const STORAGE_KEYS = {
   SESSIONS: 'd1_sessions',
@@ -14,13 +13,8 @@ export const CURRENT_VERSION = '1.3';
 // UTILITY: Get Local YYYY-MM-DD
 export const getLocalDate = (): string => {
   const now = new Date();
-  return dateToLocalDateString(now);
-};
-
-// UTILITY: Convert Date to Local YYYY-MM-DD string
-const dateToLocalDateString = (date: Date): string => {
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - (offset * 60 * 1000));
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - (offset * 60 * 1000));
   return local.toISOString().split('T')[0];
 };
 
@@ -194,136 +188,4 @@ export const processSyncQueue = async () => {
   }
   
   saveSyncQueue(newQueue);
-};
-
-// --- NET POSITION METRICS ---
-
-/**
- * Calculate net position for a single session
- * Net Position = Actual Duration - Target Duration
- * Positive = Surplus (user did more than committed)
- * Negative = Deficit (user owes time)
- */
-export const getSessionNetPosition = (session: Session): number => {
-  const target = session.targetDurationSeconds ?? session.durationSeconds;
-  return session.durationSeconds - target;
-};
-
-/**
- * Calculate net position metrics for the current week
- */
-export const calculateNetPositionMetrics = (sessions: Session[]): NetPositionMetrics => {
-  const todayStr = getLocalDate();
-  const todayDate = new Date();
-  
-  // Current week (Monday to Sunday)
-  const weekStart = startOfWeek(todayDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(todayDate, { weekStartsOn: 1 });
-  
-  // Filter sessions for current week
-  const weeklySessions = sessions.filter(s => 
-    isWithinInterval(parseISO(s.date), { start: weekStart, end: weekEnd })
-  );
-  
-  // Today's sessions
-  const todaySessions = sessions.filter(s => s.date === todayStr);
-  
-  // Calculate today's net position
-  const todayNetPositionSeconds = todaySessions.reduce((acc, s) => 
-    acc + getSessionNetPosition(s), 0
-  );
-  
-  // Calculate weekly net position
-  const weeklyNetPositionSeconds = weeklySessions.reduce((acc, s) => 
-    acc + getSessionNetPosition(s), 0
-  );
-  
-  // Calculate average for the week (days with sessions)
-  const daysWithSessions = new Set(weeklySessions.map(s => s.date)).size;
-  const weeklyAverageNetPositionSeconds = daysWithSessions > 0 
-    ? weeklyNetPositionSeconds / daysWithSessions 
-    : 0;
-  
-  // Get Friday's net position (for Saturday unlock)
-  // Friday is day 5 (0=Sunday, 1=Monday, ..., 5=Friday)
-  const currentDay = getDay(todayDate);
-  let fridayDate: Date;
-  
-  if (currentDay === 6) {
-    // If today is Saturday, look at yesterday (Friday)
-    fridayDate = subDays(todayDate, 1);
-  } else if (currentDay === 0) {
-    // If today is Sunday, look at Friday (2 days ago)
-    fridayDate = subDays(todayDate, 2);
-  } else if (currentDay < 5) {
-    // If before Friday, use the previous week's Friday
-    fridayDate = subDays(todayDate, currentDay + 2);
-  } else {
-    // If today is Friday
-    fridayDate = todayDate;
-  }
-  
-  const fridayStr = dateToLocalDateString(fridayDate);
-  
-  // Get all sessions up to and including Friday for average calculation
-  const fridayWeekStart = startOfWeek(fridayDate, { weekStartsOn: 1 });
-  const sessionsUpToFriday = sessions.filter(s => {
-    const sessionDate = parseISO(s.date);
-    return isWithinInterval(sessionDate, { start: fridayWeekStart, end: fridayDate }) 
-      && sessionDate <= fridayDate;
-  });
-  
-  const daysUpToFriday = new Set(sessionsUpToFriday.map(s => s.date)).size;
-  const netPositionUpToFriday = sessionsUpToFriday.reduce((acc, s) => 
-    acc + getSessionNetPosition(s), 0
-  );
-  const avgUpToFriday = daysUpToFriday > 0 ? netPositionUpToFriday / daysUpToFriday : 0;
-  
-  // Saturday is unlocked if average net position by Friday night is positive
-  // Show unlock status on all days (not just Saturday) so users can plan ahead
-  const isSaturdayUnlocked = avgUpToFriday > 0;
-  
-  // Calculate total owed (only negative positions)
-  const totalOwedSeconds = weeklySessions.reduce((acc, s) => {
-    const netPos = getSessionNetPosition(s);
-    return acc + (netPos < 0 ? Math.abs(netPos) : 0);
-  }, 0);
-  
-  return {
-    todayNetPositionSeconds,
-    weeklyNetPositionSeconds,
-    weeklyAverageNetPositionSeconds,
-    fridayNetPositionSeconds: avgUpToFriday,
-    isSaturdayUnlocked,
-    totalOwedSeconds
-  };
-};
-
-/**
- * Calculate penalty based on weekly deficit
- * This is a MOCK calculation - no actual payment processing
- */
-export const calculatePenalty = (totalOwedSeconds: number): PenaltyCalculation => {
-  const totalMinutesOwed = Math.ceil(totalOwedSeconds / 60);
-  
-  // Mock penalty: $1 per 10 minutes owed (adjustable rate)
-  const PENALTY_RATE_PER_10_MIN = 1.0;
-  const penaltyAmount = Math.ceil((totalMinutesOwed / 10) * PENALTY_RATE_PER_10_MIN);
-  
-  let description = '';
-  if (totalMinutesOwed === 0) {
-    description = 'No penalty - all commitments met! 🎉';
-  } else if (totalMinutesOwed < 30) {
-    description = `Light deficit. Penalty: $${penaltyAmount} to accountability partner.`;
-  } else if (totalMinutesOwed < 120) {
-    description = `Moderate deficit. Penalty: $${penaltyAmount} to charity of friend's choice.`;
-  } else {
-    description = `Significant deficit. Penalty: $${penaltyAmount} + extra accountability session required.`;
-  }
-  
-  return {
-    totalMinutesOwed,
-    penaltyAmount,
-    description
-  };
 };
