@@ -85,14 +85,25 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
    const ser = calculateSER(totalReps, totalDuration, MIN_DURATION_THRESHOLD_SECONDS);
    const formattedDate = format(parseISO(date), 'EEEE, MMMM d, yyyy');
 
+   // Handle keyboard navigation
+   const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+         onClose();
+      }
+   };
+
    return (
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div 
+         className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" 
+         onClick={onClose}
+         onKeyDown={handleKeyDown}
+      >
          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-zinc-800">
                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 font-mono">
                   Daily Summary
                </h2>
-               <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+               <button onClick={onClose} aria-label="Close modal" className="text-zinc-500 hover:text-white transition-colors">
                   <X size={20} />
                </button>
             </div>
@@ -209,7 +220,16 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
                   key={`${d.date}-${idx}`}
                   title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
                   onClick={() => !d.isEmpty && onDayClick(d.date)}
-                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 transition-all cursor-pointer'} relative group`}
+                  onKeyDown={(e) => {
+                     if (!d.isEmpty && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        onDayClick(d.date);
+                     }
+                  }}
+                  tabIndex={d.isEmpty ? undefined : 0}
+                  role={d.isEmpty ? undefined : 'button'}
+                  aria-label={d.isEmpty ? undefined : `View stats for ${d.date}`}
+                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 focus:outline-none focus:border-white transition-all cursor-pointer'} relative group`}
                >
                   {!d.isEmpty && (
                      <span className="absolute inset-0 flex items-center justify-center text-[8px] text-zinc-500 group-hover:text-white font-mono transition-colors">
