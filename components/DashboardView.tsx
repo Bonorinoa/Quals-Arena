@@ -72,7 +72,9 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
   );
 };
 
-// HEATMAP COMPONENT - Monthly Calendar View
+const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
+
+// MONTHLY CALENDAR GRID - Displays current month with proper weekday alignment and day numbers
 const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
    const calendarData = useMemo(() => {
       const today = new Date();
@@ -83,6 +85,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
       const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
       
       // Calculate padding for the start of the month (to align with week grid)
+      // Convert JavaScript's Sunday=0 to Monday-first week: Sunday needs 6 padding days, other days need (dayIndex - 1) padding
       const firstDayOfWeek = getDay(monthStart); // 0 = Sunday, 1 = Monday, etc.
       const startPadding = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert to Monday = 0
       
@@ -121,7 +124,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
          <div className="text-[10px] text-zinc-600 font-mono mb-2 flex items-center justify-between">
             <span className="uppercase tracking-wider">{calendarData.monthName}</span>
             <div className="flex gap-3 text-[9px]">
-               <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+               {WEEKDAY_HEADERS.map((day, idx) => <span key={idx}>{day}</span>)}
             </div>
          </div>
          <div className="grid grid-cols-7 gap-1 w-full">
