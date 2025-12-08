@@ -401,7 +401,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
               <input
                 type="number"
                 value={reps}
-                onChange={(e) => setReps(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setReps(0);
+                  } else {
+                    const numValue = parseInt(value);
+                    if (!isNaN(numValue)) {
+                      setReps(Math.max(0, Math.min(50, numValue)));
+                    }
+                  }
+                }}
+                min="0"
+                max="50"
                 className="w-full bg-black/40 border border-white/10 text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-colors"
                 autoFocus
               />
