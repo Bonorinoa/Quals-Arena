@@ -50,8 +50,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 animate-in fade-in duration-200 overflow-y-auto">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200 my-4 sm:my-auto" style={{ maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
           <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 font-mono">
             Protocol Configuration
