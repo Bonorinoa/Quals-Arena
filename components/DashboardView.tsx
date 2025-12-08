@@ -16,7 +16,7 @@ import {
 import { getLocalDate } from '../services/storage';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
-import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS } from '../utils/sessionUtils';
+import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance } from '../utils/sessionUtils';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -280,6 +280,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     );
 
     const weeklyReps = getTotalReps(weeklySessions);
+    const weeklyBudgetBalance = getWeeklyBudgetBalance(sessions, start, end);
+    
     const totalDuration = getTotalDuration(sessions);
     const totalReps = getTotalReps(sessions);
     const globalSER = calculateSER(totalReps, totalDuration, 3600);
@@ -301,6 +303,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
         rawSer: yesterdaySER
       },
       weeklyReps,
+      weeklyBudgetBalance,
       globalSER: globalSER.toFixed(1),
       daysSober: Math.max(0, daysSober),
       timeBudget: {
@@ -418,6 +421,93 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                  {stats.today.ser === "NOISE" && <div className="text-[10px] text-zinc-600 font-mono mt-2 flex items-center gap-1"><Activity size={10} /> Log &gt; 5 mins</div>}
                </Card>
             </div>
+
+            {/* WEEKLY BUDGET BALANCE */}
+            <Card className="bg-zinc-900/50">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest flex items-center gap-2">
+                    <Scale size={12} /> Weekly Budget Balance
+                  </div>
+                  <div className="text-[9px] text-zinc-600 font-mono">
+                    {format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'MMM d')} - {format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'MMM d')}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Total Balance</div>
+                    <div className={`text-2xl font-mono font-bold ${
+                      stats.weeklyBudgetBalance.totalBalance > 0 
+                        ? 'text-emerald-500' 
+                        : stats.weeklyBudgetBalance.totalBalance < 0 
+                          ? 'text-red-500' 
+                          : 'text-zinc-600'
+                    }`}>
+                      {stats.weeklyBudgetBalance.totalBalance > 0 ? '+' : ''}
+                      {formatTimeFull(Math.abs(stats.weeklyBudgetBalance.totalBalance))}
+                    </div>
+                    <div className="text-[9px] text-zinc-600 font-mono mt-1">
+                      {stats.weeklyBudgetBalance.totalBalance > 0 ? 'Surplus' : stats.weeklyBudgetBalance.totalBalance < 0 ? 'Deficit' : 'Neutral'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Avg Daily</div>
+                    <div className={`text-2xl font-mono font-bold ${
+                      stats.weeklyBudgetBalance.averageDailyBalance > 0 
+                        ? 'text-emerald-500' 
+                        : stats.weeklyBudgetBalance.averageDailyBalance < 0 
+                          ? 'text-red-500' 
+                          : 'text-zinc-600'
+                    }`}>
+                      {stats.weeklyBudgetBalance.averageDailyBalance > 0 ? '+' : ''}
+                      {formatTimeFull(Math.abs(stats.weeklyBudgetBalance.averageDailyBalance))}
+                    </div>
+                    <div className="text-[9px] text-zinc-600 font-mono mt-1">
+                      Per Day
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Active Days</div>
+                    <div className="text-2xl font-mono font-bold text-white">
+                      {stats.weeklyBudgetBalance.daysWithSessions}
+                    </div>
+                    <div className="text-[9px] text-zinc-600 font-mono mt-1">
+                      This Week
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-800">
+                  <div>
+                    <div className="text-[10px] text-emerald-700 uppercase tracking-wider font-mono mb-1">Total Gains</div>
+                    <div className="text-lg font-mono text-emerald-500">
+                      +{formatTimeFull(stats.weeklyBudgetBalance.totalSurplus)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-red-700 uppercase tracking-wider font-mono mb-1">Total Defaults</div>
+                    <div className="text-lg font-mono text-red-500">
+                      {formatTimeFull(Math.abs(stats.weeklyBudgetBalance.totalDeficit))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Penalty Rule Indicator */}
+                {stats.weeklyBudgetBalance.averageDailyBalance < -3600 && (
+                  <div className="mt-2 p-3 bg-red-950/30 border border-red-900/50 rounded">
+                    <div className="text-[10px] text-red-400 uppercase tracking-wider font-mono mb-1 flex items-center gap-1">
+                      <AlertOctagon size={10} /> Penalty Warning
+                    </div>
+                    <div className="text-xs text-red-300 font-mono">
+                      Average daily deficit exceeds 1 hour. Consider adjusting commitment levels or increasing work duration.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-zinc-900/50 flex flex-col justify-between">
