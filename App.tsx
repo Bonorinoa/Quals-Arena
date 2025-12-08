@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson } from 'lucide-react';
+import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson, HelpCircle } from 'lucide-react';
 import { TimerView } from './components/TimerView';
 import { DashboardView } from './components/DashboardView';
 import { SettingsView } from './components/SettingsView';
+import { WelcomeView } from './components/WelcomeView';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
 
@@ -13,6 +14,7 @@ export default function App() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [showDataMenu, setShowDataMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize data
@@ -25,7 +27,18 @@ export default function App() {
     }
     setSessions(storage.getSessions());
     setSettings(storage.getSettings());
+    
+    // Show welcome page on first visit
+    const hasSeenWelcome = localStorage.getItem('highbeta_has_seen_welcome');
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+    }
   }, []);
+
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('highbeta_has_seen_welcome', 'true');
+  };
 
   const handleSessionComplete = (session: Session) => {
     storage.saveSession(session);
@@ -162,8 +175,21 @@ export default function App() {
         />
       )}
 
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <WelcomeView onClose={handleCloseWelcome} />
+      )}
+
       {/* Footer / Data Controls */}
       <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">
+        <button 
+          onClick={() => setShowWelcome(true)}
+          className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-lg"
+          title="Welcome & Guide"
+        >
+          <HelpCircle size={18} />
+        </button>
+
         <button 
           onClick={() => setShowSettingsModal(true)}
           className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-lg"
