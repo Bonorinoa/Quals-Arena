@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, Thermometer, Wind, Brain, Send, X } from 'lucide-react';
 import { Session, MentalNote } from '../types';
 import { getLocalDate } from '../services/storage';
+import { formatTime } from '../utils/timeUtils';
 
 interface TimerViewProps {
   onSessionComplete: (session: Session) => void;
@@ -251,13 +252,6 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
     };
     
     onSessionComplete(session);
-  };
-
-  const formatTime = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   // ----------------------------------------------------------------------

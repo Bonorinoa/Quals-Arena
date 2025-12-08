@@ -1,5 +1,6 @@
 
 import { Session, UserSettings, DEFAULT_SETTINGS, SyncQueueItem } from '../types';
+import { getLocalDate } from '../utils/dateUtils';
 
 const STORAGE_KEYS = {
   SESSIONS: 'highbeta_sessions',
@@ -10,13 +11,8 @@ const STORAGE_KEYS = {
 
 export const CURRENT_VERSION = '1.3';
 
-// UTILITY: Get Local YYYY-MM-DD
-export const getLocalDate = (): string => {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - (offset * 60 * 1000));
-  return local.toISOString().split('T')[0];
-};
+// Re-export for backward compatibility
+export { getLocalDate };
 
 export const getSessions = (): Session[] => {
   try {

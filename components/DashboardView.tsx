@@ -14,6 +14,8 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
+import { formatTimeFull } from '../utils/timeUtils';
+import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -154,10 +156,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const todayStr = getLocalDate();
     const todayDate = new Date();
     
-    const yesterdayDate = subDays(todayDate, 1);
-    const offset = yesterdayDate.getTimezoneOffset();
-    const localYesterday = new Date(yesterdayDate.getTime() - (offset * 60 * 1000));
-    const yesterdayStr = localYesterday.toISOString().split('T')[0];
+    const yesterdayStr = getYesterdayDate();
 
     const todaySessions = sessions.filter(s => s.date === todayStr);
     const todayDuration = todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
@@ -216,14 +215,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     };
   }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours]);
 
-  const formatTimeFull = (secs: number) => {
-    const absSecs = Math.abs(secs);
-    const h = Math.floor(absSecs / 3600);
-    const m = Math.floor((absSecs % 3600) / 60);
-    const s = Math.floor(absSecs % 60);
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   const getBalanceColor = (logged: number, goal: number) => {
     if (logged > goal) return 'text-emerald-500'; // Exceeded goal
     if (logged > 0) return 'text-white'; // Making progress
@@ -244,9 +235,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
 
     for (let i = 6; i >= 0; i--) {
       const d = subDays(now, i);
-      const offset = d.getTimezoneOffset();
-      const localD = new Date(d.getTime() - (offset * 60 * 1000));
-      const dateStr = localD.toISOString().split('T')[0];
+      const dateStr = dateToLocalString(d);
       const daySessions = sessions.filter(s => s.date === dateStr);
       const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
       data.push({
