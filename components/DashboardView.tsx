@@ -88,15 +88,13 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
       
       // Add empty cells for days before the month starts (to align with calendar)
       for (let i = 0; i < firstDayOfWeek; i++) {
-         result.push({ date: '', intensity: 'bg-transparent', reps: 0, isEmpty: true });
+         result.push({ date: null, intensity: 'bg-transparent', reps: 0, isEmpty: true });
       }
       
       // Add all days of the month
       daysInMonth.forEach(d => {
-         // Use local date conversion to avoid timezone issues
-         const offset = d.getTimezoneOffset();
-         const localD = new Date(d.getTime() - (offset * 60 * 1000));
-         const dateStr = localD.toISOString().split('T')[0];
+         // Format date as YYYY-MM-DD using date-fns format (handles timezone correctly)
+         const dateStr = format(d, 'yyyy-MM-dd');
          
          const daySessions = sessions.filter(s => s.date === dateStr);
          const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
