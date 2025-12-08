@@ -10,7 +10,8 @@ import {
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
 import { 
-  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays 
+  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays,
+  startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
 
@@ -71,16 +72,33 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
   );
 };
 
-// HEATMAP COMPONENT
+const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
+
+// MONTHLY CALENDAR GRID - Displays current month with proper weekday alignment and day numbers
 const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
-   const days = useMemo(() => {
-      const result = [];
+   const calendarData = useMemo(() => {
       const today = new Date();
-      // Generate last 60 days
-      for (let i = 59; i >= 0; i--) {
-         const d = subDays(today, i);
-         const dateStr = d.toISOString().split('T')[0]; 
-         
+      const monthStart = startOfMonth(today);
+      const monthEnd = endOfMonth(today);
+      
+      // Get all days in the current month
+      const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      
+      // Calculate padding for the start of the month (to align with week grid)
+      // Convert JavaScript's Sunday=0 to Monday-first week: Sunday needs 6 padding days, other days need (dayIndex - 1) padding
+      const firstDayOfWeek = getDay(monthStart); // 0 = Sunday, 1 = Monday, etc.
+      const startPadding = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert to Monday = 0
+      
+      const result = [];
+      
+      // Add empty cells for padding (previous month days)
+      for (let i = 0; i < startPadding; i++) {
+         result.push({ date: '', intensity: 'bg-transparent', reps: 0, isEmpty: true });
+      }
+      
+      // Add actual days of the month
+      for (const day of daysInMonth) {
+         const dateStr = day.toISOString().split('T')[0];
          const daySessions = sessions.filter(s => s.date === dateStr);
          const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
          
@@ -88,21 +106,42 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
          if (reps > 0) intensity = 'bg-emerald-900/40';
          if (reps > 5) intensity = 'bg-emerald-700/60';
          if (reps > 15) intensity = 'bg-emerald-500';
-
-         result.push({ date: dateStr, intensity, reps });
+         
+         result.push({ 
+            date: dateStr, 
+            intensity, 
+            reps, 
+            dayOfMonth: day.getDate(),
+            isEmpty: false 
+         });
       }
-      return result;
+      
+      return { days: result, monthName: format(today, 'MMMM yyyy') };
    }, [sessions]);
 
    return (
-      <div className="flex flex-wrap gap-1 w-full justify-start">
-         {days.map((d) => (
-            <div 
-               key={d.date} 
-               title={`${d.date}: ${d.reps} reps`}
-               className={`w-2 h-2 rounded-sm ${d.intensity} hover:border hover:border-white/50 transition-all cursor-help`}
-            />
-         ))}
+      <div>
+         <div className="text-[10px] text-zinc-600 font-mono mb-2 flex items-center justify-between">
+            <span className="uppercase tracking-wider">{calendarData.monthName}</span>
+            <div className="flex gap-3 text-[9px]">
+               {WEEKDAY_HEADERS.map((day, idx) => <span key={idx}>{day}</span>)}
+            </div>
+         </div>
+         <div className="grid grid-cols-7 gap-1 w-full">
+            {calendarData.days.map((d, idx) => (
+               <div 
+                  key={`${d.date}-${idx}`}
+                  title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
+                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 transition-all cursor-help'} relative group`}
+               >
+                  {!d.isEmpty && (
+                     <span className="absolute inset-0 flex items-center justify-center text-[8px] text-zinc-500 group-hover:text-white font-mono transition-colors">
+                        {d.dayOfMonth}
+                     </span>
+                  )}
+               </div>
+            ))}
+         </div>
       </div>
    );
 };
@@ -185,10 +224,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const getNetPositionColor = (secs: number) => {
-    if (secs < 0) return 'text-red-500';
-    if (secs > 0) return 'text-emerald-500';
-    return 'text-white';
+  const getBalanceColor = (logged: number, goal: number) => {
+    if (logged > goal) return 'text-emerald-500'; // Exceeded goal
+    if (logged > 0) return 'text-white'; // Making progress
+    return 'text-zinc-600'; // No progress yet
   };
 
   // Chart Data
@@ -240,14 +279,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
               <div className="flex items-center gap-4 px-6 py-3 border-b sm:border-b-0 sm:border-r border-zinc-800 w-full sm:w-auto justify-center">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono flex items-center gap-1 mb-1">
-                      <Scale size={10} /> Contract Balance
+                      <Scale size={10} /> Daily Progress
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-xl font-mono font-bold ${getNetPositionColor(stats.today.netPositionSeconds)}`}>
-                        {stats.today.netPositionSeconds < 0 ? '-' : (stats.today.netPositionSeconds > 0 ? '+' : '')}
-                        {formatTimeFull(stats.today.netPositionSeconds)} 
+                      <span className={`text-xl font-mono font-bold ${getBalanceColor(stats.today.durationSeconds, stats.timeBudget.goalSeconds)}`}>
+                        {stats.today.durationSeconds > stats.timeBudget.goalSeconds ? '+' : ''}
+                        {formatTimeFull(stats.today.durationSeconds)} 
                       </span>
-                      <span className="text-zinc-600 text-sm font-mono">/ {settings.dailyTimeGoalHours}:00:00</span>
+                      <span className="text-zinc-600 text-sm font-mono">/ {formatTimeFull(settings.dailyTimeGoalHours * 3600)}</span>
                     </div>
                     <div className="w-40 h-1 bg-zinc-800 mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
                        <div className="h-full bg-zinc-400 transition-all duration-500" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
@@ -283,7 +322,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             {/* HEATMAP LEDGER */}
             <div className="p-6 border border-zinc-800 bg-zinc-950/50">
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Grid size={12} /> Consistency Grid (60d)
+                  <Grid size={12} /> Monthly Consistency Grid
                </div>
                <ConsistencyGrid sessions={sessions} />
             </div>

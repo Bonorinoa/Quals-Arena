@@ -1,5 +1,5 @@
 
-# Quals Arena (The D1 Economist Protocol)
+# highBeta - The High Patience Protocol
 
 **Subject:** D1 Economist-Entrepreneur (Ph.D. Candidate)  
 **Objective:** Habit Reformation & High-Performance Sober Productivity  
@@ -7,7 +7,7 @@
 
 ## Overview
 
-Quals Arena is a minimal viable web application designed to solve the **Principal-Agent Problem** within the self. It aligns the incentives of the "Planner" (the forward-looking self who wants to pass exams) with the "Doer" (the present self who craves cheap dopamine) using strict commitment devices and high-visibility metrics.
+highBeta (β) is a minimal viable web application designed to solve the **Principal-Agent Problem** within the self. The name symbolizes the discount factor in economic theory—high beta represents high patience, which leads to better lifestyle choices and long-term thinking. It aligns the incentives of the "Planner" (the forward-looking self who wants to pass exams) with the "Doer" (the present self who craves cheap dopamine) using strict commitment devices and high-visibility metrics.
 
 This is not a to-do list. It is a **Performance Analytics Dashboard** for a CEO tracking their most valuable asset: cognitive capacity.
 
@@ -104,14 +104,14 @@ To enable the "Back up to Google Sheets" feature:
 
     // Handles browser visits to the URL to prevent "Script function not found" errors
     function doGet(e) {
-      return ContentService.createTextOutput("Quals Arena Cloud Node: Online");
+      return ContentService.createTextOutput("highBeta Cloud Node: Online");
     }
     ```
 4.  Click **Deploy** -> **New Deployment**.
 5.  Select **Type: Web App**.
 6.  Set "Who has access" to **Anyone** (Required so the client-side app can POST to it without OAuth).
 7.  Copy the **Web App URL**.
-8.  Paste this URL into the **Settings** menu of the Quals Arena app.
+8.  Paste this URL into the **Settings** menu of the highBeta app.
 9.  Click "Test Connection" to verify.
 
 ## Current Limitations

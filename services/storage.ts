@@ -2,10 +2,10 @@
 import { Session, UserSettings, DEFAULT_SETTINGS, SyncQueueItem } from '../types';
 
 const STORAGE_KEYS = {
-  SESSIONS: 'd1_sessions',
-  SETTINGS: 'd1_settings',
-  VERSION: 'd1_version',
-  SYNC_QUEUE: 'd1_sync_queue'
+  SESSIONS: 'highbeta_sessions',
+  SETTINGS: 'highbeta_settings',
+  VERSION: 'highbeta_version',
+  SYNC_QUEUE: 'highbeta_sync_queue'
 };
 
 export const CURRENT_VERSION = '1.3';
