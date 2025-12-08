@@ -10,7 +10,8 @@ import {
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
 import { 
-  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays 
+  differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays, 
+  startOfMonth, endOfMonth, eachDayOfInterval, getDay, addDays
 } from 'date-fns';
 import { getLocalDate } from '../services/storage';
 
@@ -73,13 +74,29 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
 
 // HEATMAP COMPONENT
 const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
-   const days = useMemo(() => {
+   const { days, monthLabel } = useMemo(() => {
       const result = [];
       const today = new Date();
-      // Generate last 60 days
-      for (let i = 59; i >= 0; i--) {
-         const d = subDays(today, i);
-         const dateStr = d.toISOString().split('T')[0]; 
+      const monthStart = startOfMonth(today);
+      const monthEnd = endOfMonth(today);
+      
+      // Get all days in the current month
+      const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      
+      // Get the day of week for the first day (0 = Sunday, 1 = Monday, etc.)
+      const firstDayOfWeek = getDay(monthStart);
+      
+      // Add empty cells for days before the month starts (to align with calendar)
+      for (let i = 0; i < firstDayOfWeek; i++) {
+         result.push({ date: '', intensity: 'bg-transparent', reps: 0, isEmpty: true });
+      }
+      
+      // Add all days of the month
+      daysInMonth.forEach(d => {
+         // Use local date conversion to avoid timezone issues
+         const offset = d.getTimezoneOffset();
+         const localD = new Date(d.getTime() - (offset * 60 * 1000));
+         const dateStr = localD.toISOString().split('T')[0];
          
          const daySessions = sessions.filter(s => s.date === dateStr);
          const reps = daySessions.reduce((acc, s) => acc + s.reps, 0);
@@ -89,20 +106,33 @@ const ConsistencyGrid: React.FC<{ sessions: Session[] }> = ({ sessions }) => {
          if (reps > 5) intensity = 'bg-emerald-700/60';
          if (reps > 15) intensity = 'bg-emerald-500';
 
-         result.push({ date: dateStr, intensity, reps });
-      }
-      return result;
+         result.push({ date: dateStr, intensity, reps, isEmpty: false });
+      });
+      
+      const monthLabel = format(today, 'MMMM yyyy');
+      
+      return { days: result, monthLabel };
    }, [sessions]);
 
+   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
    return (
-      <div className="flex flex-wrap gap-1 w-full justify-start">
-         {days.map((d) => (
-            <div 
-               key={d.date} 
-               title={`${d.date}: ${d.reps} reps`}
-               className={`w-2 h-2 rounded-sm ${d.intensity} hover:border hover:border-white/50 transition-all cursor-help`}
-            />
-         ))}
+      <div className="w-full">
+         <div className="text-sm font-mono text-zinc-400 mb-2">{monthLabel}</div>
+         <div className="grid grid-cols-7 gap-1 w-full">
+            {dayLabels.map((label) => (
+               <div key={label} className="text-[10px] text-zinc-600 font-mono text-center mb-1">
+                  {label}
+               </div>
+            ))}
+            {days.map((d, idx) => (
+               <div 
+                  key={d.isEmpty ? `empty-${idx}` : d.date} 
+                  title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
+                  className={`w-full aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 transition-all cursor-help'}`}
+               />
+            ))}
+         </div>
       </div>
    );
 };
@@ -191,6 +221,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     return 'text-white';
   };
 
+  const getTimeLoggedColor = (logged: number, goal: number) => {
+    if (logged > goal) return 'text-emerald-500';
+    return 'text-white';
+  };
+
   // Chart Data
   const chartData = useMemo(() => {
     const data = [];
@@ -240,12 +275,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
               <div className="flex items-center gap-4 px-6 py-3 border-b sm:border-b-0 sm:border-r border-zinc-800 w-full sm:w-auto justify-center">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono flex items-center gap-1 mb-1">
-                      <Scale size={10} /> Contract Balance
+                      <Scale size={10} /> Daily Progress
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-xl font-mono font-bold ${getNetPositionColor(stats.today.netPositionSeconds)}`}>
-                        {stats.today.netPositionSeconds < 0 ? '-' : (stats.today.netPositionSeconds > 0 ? '+' : '')}
-                        {formatTimeFull(stats.today.netPositionSeconds)} 
+                      <span className={`text-xl font-mono font-bold ${getTimeLoggedColor(stats.today.durationSeconds, stats.timeBudget.goalSeconds)}`}>
+                        {stats.today.durationSeconds > stats.timeBudget.goalSeconds && '+'}
+                        {formatTimeFull(stats.today.durationSeconds)} 
                       </span>
                       <span className="text-zinc-600 text-sm font-mono">/ {settings.dailyTimeGoalHours}:00:00</span>
                     </div>
@@ -283,7 +318,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             {/* HEATMAP LEDGER */}
             <div className="p-6 border border-zinc-800 bg-zinc-950/50">
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Grid size={12} /> Consistency Grid (60d)
+                  <Grid size={12} /> Consistency Grid (Current Month)
                </div>
                <ConsistencyGrid sessions={sessions} />
             </div>
