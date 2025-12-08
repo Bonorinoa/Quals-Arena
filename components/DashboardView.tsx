@@ -18,6 +18,12 @@ import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
 import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance } from '../utils/sessionUtils';
 
+/**
+ * Penalty threshold for weekly budget balance (in seconds)
+ * If average daily deficit exceeds this threshold, a warning is displayed
+ */
+const PENALTY_THRESHOLD_SECONDS = 3600; // 1 hour
+
 interface DashboardViewProps {
   sessions: Session[];
   settings: UserSettings;
@@ -496,7 +502,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                 </div>
 
                 {/* Penalty Rule Indicator */}
-                {stats.weeklyBudgetBalance.averageDailyBalance < -3600 && (
+                {stats.weeklyBudgetBalance.averageDailyBalance < -PENALTY_THRESHOLD_SECONDS && (
                   <div className="mt-2 p-3 bg-red-950/30 border border-red-900/50 rounded">
                     <div className="text-[10px] text-red-400 uppercase tracking-wider font-mono mb-1 flex items-center gap-1">
                       <AlertOctagon size={10} /> Penalty Warning

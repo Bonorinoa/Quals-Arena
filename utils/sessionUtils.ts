@@ -56,11 +56,14 @@ export const calculateSER = (reps: number, durationSeconds: number, minDuration:
  * Positive = surplus (logged more than committed)
  * Negative = deficit (logged less than committed)
  * @param session - Session to calculate balance for
- * @returns Balance in seconds (positive for surplus, negative for deficit)
+ * @returns Balance in seconds (positive for surplus, negative for deficit), or 0 if no target was set
  */
 export const getSessionBudgetBalance = (session: Session): number => {
-  const target = session.targetDurationSeconds ?? session.durationSeconds;
-  return session.durationSeconds - target;
+  // If no target was set, there's no deficit or surplus
+  if (!session.targetDurationSeconds) {
+    return 0;
+  }
+  return session.durationSeconds - session.targetDurationSeconds;
 };
 
 /**
@@ -118,8 +121,9 @@ export const getWeeklyBudgetBalance = (
   const daysWithSessions = uniqueDates.size;
 
   // Calculate average (over the full 7-day period, not just days with sessions)
-  const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  const averageDailyBalance = daysInPeriod > 0 ? totalBalance / daysInPeriod : 0;
+  // For a standard week, this should be 7 days
+  const daysInPeriod = 7;
+  const averageDailyBalance = totalBalance / daysInPeriod;
 
   return {
     totalBalance,
