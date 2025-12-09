@@ -1,0 +1,20 @@
+import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup();
+  // Clear localStorage after each test
+  localStorage.clear();
+});
+
+// Mock window.wakeLock API (not available in test environment)
+Object.defineProperty(window.navigator, 'wakeLock', {
+  writable: true,
+  value: {
+    request: () => Promise.resolve({
+      release: () => Promise.resolve(),
+    }),
+  },
+});
