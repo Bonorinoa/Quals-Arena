@@ -126,12 +126,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-white selection:text-black">
+    <div className="min-h-screen text-zinc-200 font-sans selection:bg-white selection:text-black">
       
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 h-16 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-50 flex items-center justify-between px-6">
+      <nav className="fixed top-0 left-0 right-0 h-16 border-b border-zinc-900 glass-strong z-50 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-white rotate-45"></div>
+          <div className="w-3 h-3 bg-white rotate-45 shadow-glow"></div>
           <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">highBeta</span>
         </div>
         
@@ -139,7 +139,7 @@ export default function App() {
            {view === ViewMode.DASHBOARD && (
              <button 
               onClick={() => setView(ViewMode.FOCUS)}
-              className="px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors"
+              className="btn-primary"
              >
                Enter The Arena
              </button>
@@ -184,7 +184,7 @@ export default function App() {
       <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">
         <button 
           onClick={() => setShowWelcome(true)}
-          className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-lg"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
           title="Welcome & Guide"
         >
           <HelpCircle size={18} />
@@ -192,7 +192,7 @@ export default function App() {
 
         <button 
           onClick={() => setShowSettingsModal(true)}
-          className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-lg"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
           title="Settings"
         >
           <Settings size={18} />
@@ -200,24 +200,24 @@ export default function App() {
 
         <button 
           onClick={() => setShowDataMenu(!showDataMenu)}
-          className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-lg"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
           title="Data Management"
         >
           <Download size={18} />
         </button>
         
         {showDataMenu && (
-          <div className="bg-zinc-900 border border-zinc-800 p-2 rounded-lg shadow-xl flex flex-col gap-2 animate-in slide-in-from-bottom-5 w-48">
+          <div className="glass border-zinc-800 p-2 rounded-lg shadow-glass-lg flex flex-col gap-2 animate-slide-up w-48">
              <button 
                 onClick={handleBackupJSON}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-zinc-800 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
              >
                <FileJson size={14} /> Backup (JSON)
              </button>
              
              <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-zinc-800 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
              >
                <Upload size={14} /> Restore (JSON)
              </button>
@@ -233,7 +233,7 @@ export default function App() {
 
              <button 
                 onClick={handleExportCSV}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
              >
                <Download size={14} /> Export CSV
              </button>

@@ -13,9 +13,15 @@ export const Card: React.FC<CardProps> = ({ title, children, className = '', acc
     danger: 'border-red-500/20',
     success: 'border-emerald-500/20'
   };
+  
+  const glowEffects = {
+    default: '',
+    danger: 'shadow-[0_0_20px_rgba(220,38,38,0.15)]',
+    success: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+  };
 
   return (
-    <div className={`bg-zinc-900/40 backdrop-blur-md border ${borderColors[accent]} p-6 rounded-xl shadow-xl ${className}`}>
+    <div className={`glass rounded-xl shadow-glass p-6 ${borderColors[accent]} ${glowEffects[accent]} ${className}`}>
       {title && (
         <h3 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-4 font-mono flex items-center gap-2">
           {title}
