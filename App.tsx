@@ -1,21 +1,28 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson, HelpCircle } from 'lucide-react';
+import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson, HelpCircle, User, Cloud, CloudOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { TimerView } from './components/TimerView';
 import { DashboardView } from './components/DashboardView';
 import { SettingsView } from './components/SettingsView';
 import { WelcomeView } from './components/WelcomeView';
+import { AuthModal } from './components/AuthModal';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
+import { AuthProvider, useAuth } from './services/AuthContext';
+import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud } from './services/firebaseSync';
 
-export default function App() {
+function AppContent() {
+  const { user, loading: authLoading } = useAuth();
   const [view, setView] = useState<ViewMode>(ViewMode.DASHBOARD);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [showDataMenu, setShowDataMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize data
   useEffect(() => {
@@ -34,6 +41,63 @@ export default function App() {
       setShowWelcome(true);
     }
   }, []);
+
+  // Setup cloud sync callbacks when user is authenticated
+  useEffect(() => {
+    if (user) {
+      // Set up cloud sync callbacks
+      storage.setCloudSyncCallback(async (session: Session) => {
+        await syncSingleSessionToCloud(user.uid, session);
+      });
+      
+      storage.setCloudSettingsSyncCallback(async (settings: UserSettings) => {
+        await syncSettingsToCloud(user.uid, settings);
+      });
+      
+      // Perform initial sync when user signs in
+      performInitialSync();
+    } else {
+      // Clear callbacks when signed out
+      storage.setCloudSyncCallback(null);
+      storage.setCloudSettingsSyncCallback(null);
+      setSyncStatus('idle');
+    }
+  }, [user]);
+
+  const performInitialSync = async () => {
+    if (!user) return;
+    
+    setSyncStatus('syncing');
+    try {
+      const { sessions: mergedSessions, settings: mergedSettings } = 
+        await performFullSync(user.uid, sessions, settings);
+      
+      // Update state with merged data
+      setSessions(mergedSessions);
+      setSettings(mergedSettings);
+      
+      // Update localStorage with merged data
+      localStorage.setItem('highbeta_sessions', JSON.stringify(mergedSessions));
+      localStorage.setItem('highbeta_settings', JSON.stringify(mergedSettings));
+      
+      setSyncStatus('synced');
+      
+      // Clear synced status after 3 seconds
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(() => {
+        setSyncStatus('idle');
+      }, 3000);
+    } catch (error) {
+      console.error('Sync failed:', error);
+      setSyncStatus('error');
+      
+      // Clear error status after 5 seconds
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(() => {
+        setSyncStatus('idle');
+      }, 5000);
+    }
+  };
 
   const handleCloseWelcome = () => {
     setShowWelcome(false);
@@ -134,6 +198,68 @@ export default function App() {
           <div className="w-3 h-3 bg-white rotate-45 shadow-glow"></div>
           <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">highBeta</span>
         </div>
+        
+        {/* Auth & Sync Status */}
+        <div className="flex items-center gap-2">
+          {/* Sync Status Indicator */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
+              {syncStatus === 'syncing' && (
+                <>
+                  <Cloud className="text-blue-400 animate-pulse" size={14} />
+                  <span className="text-xs text-zinc-400">Syncing...</span>
+                </>
+              )}
+              {syncStatus === 'synced' && (
+                <>
+                  <CheckCircle2 className="text-green-400" size={14} />
+                  <span className="text-xs text-zinc-400">Synced</span>
+                </>
+              )}
+              {syncStatus === 'error' && (
+                <>
+                  <AlertCircle className="text-red-400" size={14} />
+                  <span className="text-xs text-zinc-400">Sync Error</span>
+                </>
+              )}
+              {syncStatus === 'idle' && (
+                <>
+                  <Cloud className="text-zinc-500" size={14} />
+                  <span className="text-xs text-zinc-500">Cloud</span>
+                </>
+              )}
+            </div>
+          )}
+          
+          {/* Auth Button */}
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all"
+            title={user ? 'Account' : 'Sign In'}
+          >
+            {user ? (
+              <>
+                {user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt={user.displayName || 'User'} 
+                    className="w-6 h-6 rounded-full border border-white/20"
+                  />
+                ) : (
+                  <User className="text-zinc-400" size={16} />
+                )}
+                <span className="text-xs text-zinc-300 hidden sm:inline">
+                  {user.displayName?.split(' ')[0] || 'Account'}
+                </span>
+              </>
+            ) : (
+              <>
+                <User className="text-zinc-400" size={16} />
+                <span className="text-xs text-zinc-400 hidden sm:inline">Sign In</span>
+              </>
+            )}
+          </button>
+        </div>
       </nav>
 
       {/* Main Content Area */}
@@ -167,6 +293,11 @@ export default function App() {
       {/* Welcome Modal */}
       {showWelcome && (
         <WelcomeView onClose={handleCloseWelcome} />
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
       )}
 
       {/* Footer / Data Controls */}
@@ -237,5 +368,13 @@ export default function App() {
         )}
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
