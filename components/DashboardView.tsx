@@ -100,16 +100,16 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
 
    return (
       <div 
-         className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" 
+         className="fixed inset-0 z-50 bg-black/80 backdrop-blur-lg flex items-center justify-center p-4 animate-fade-in" 
          onClick={onClose}
          onKeyDown={handleKeyDown}
       >
-         <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+         <div className="w-full max-w-lg glass-strong border-zinc-800 shadow-glass-lg animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-zinc-800">
                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 font-mono">
                   Daily Summary
                </h2>
-               <button onClick={onClose} aria-label="Close modal" className="text-zinc-500 hover:text-white transition-colors">
+               <button onClick={onClose} aria-label="Close modal" className="text-zinc-500 hover:text-white transition-colors interactive">
                   <X size={20} />
                </button>
             </div>
@@ -127,7 +127,7 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
                   </div>
                   <div>
                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Reps</div>
-                     <div className="text-xl text-white font-mono font-bold">{totalReps}</div>
+                     <div className="text-xl text-ember-500 font-mono font-bold">{totalReps}</div>
                   </div>
                   <div>
                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">SER</div>
@@ -140,12 +140,12 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
                {daySessions.length > 0 && (
                   <div>
                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-3">Sessions ({daySessions.length})</div>
-                     <div className="space-y-2 max-h-64 overflow-y-auto">
+                     <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
                         {daySessions.map((session) => (
-                           <div key={session.id} className="bg-zinc-950/50 border border-zinc-800 p-3 rounded">
+                           <div key={session.id} className="glass-subtle border-zinc-800 p-3 rounded elevated-sm">
                               <div className="flex justify-between items-start mb-2">
                                  <div className="text-sm text-white font-mono">{(session.durationSeconds / 60).toFixed(0)}m</div>
-                                 <div className="text-sm text-zinc-400 font-mono">{session.reps} reps</div>
+                                 <div className="text-sm text-ember-500 font-mono font-bold">{session.reps} reps</div>
                               </div>
                               {session.notes && (
                                  <div className="text-xs text-zinc-500 font-mono mt-2 border-t border-zinc-800 pt-2">{session.notes}</div>
@@ -235,7 +235,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
                   tabIndex={d.isEmpty ? undefined : 0}
                   role={d.isEmpty ? undefined : 'button'}
                   aria-label={d.isEmpty ? undefined : `View stats for ${d.date}`}
-                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-white/50 focus:outline-none focus:border-white transition-all cursor-pointer'} relative group`}
+                  className={`aspect-square rounded-sm ${d.intensity} ${d.isEmpty ? '' : 'hover:border hover:border-ember-500/50 focus:outline-none focus:border-ember-500 focus:shadow-inner-glow transition-all cursor-pointer interactive'} relative group`}
                >
                   {!d.isEmpty && (
                      <span className="absolute inset-0 flex items-center justify-center text-[8px] text-zinc-500 group-hover:text-white font-mono transition-colors">
@@ -355,20 +355,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
   const targetMet = stats.weeklyReps >= settings.weeklyRepTarget;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8rem)] animate-in fade-in duration-500">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] animate-fade-in">
       
       {/* HERO SECTION */}
       <div className="flex-1 flex flex-col items-center justify-center py-12">
         <div className="relative group cursor-pointer" onClick={onStartSession}>
-           <div className="absolute inset-0 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-700"></div>
-           <button className="relative z-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full border border-zinc-700 bg-zinc-950 flex flex-col items-center justify-center hover:border-zinc-400 hover:scale-105 transition-all duration-300 shadow-2xl shadow-black">
+           <div className="absolute inset-0 bg-ember-500/10 rounded-full blur-3xl group-hover:bg-ember-500/20 transition-all duration-700 animate-pulse-slow"></div>
+           <button className="btn-glass relative z-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full elevated hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center">
              <Play size={48} className="text-white mb-4 fill-white" />
              <span className="text-sm font-mono uppercase tracking-[0.2em] text-zinc-400 group-hover:text-white transition-colors">Enter The Arena</span>
            </button>
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-4">
-           <div className="flex flex-col sm:flex-row items-center gap-0 sm:gap-6 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-1 sm:p-2 sm:pr-6">
+           <div className="flex flex-col sm:flex-row items-center gap-0 sm:gap-6 glass rounded-2xl border-zinc-800 p-1 sm:p-2 sm:pr-6 elevated">
               <div className="flex items-center gap-4 px-6 py-3 border-b sm:border-b-0 sm:border-r border-zinc-800 w-full sm:w-auto justify-center">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono flex items-center gap-1 mb-1">
@@ -381,8 +381,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                       </span>
                       <span className="text-zinc-600 text-sm font-mono">/ {formatTimeFull(settings.dailyTimeGoalHours * 3600)}</span>
                     </div>
-                    <div className="w-40 h-1 bg-zinc-800 mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
-                       <div className="h-full bg-zinc-400 transition-all duration-500" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
+                    <div className="w-40 h-1 glass-subtle mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
+                       <div className="h-full bg-gradient-to-r from-ember-700 to-ember-500 transition-all duration-500 shadow-glow" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
                     </div>
                  </div>
               </div>
@@ -390,12 +390,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
               <div className="flex items-center gap-6 px-4 py-3 sm:py-0 w-full sm:w-auto justify-between sm:justify-start">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono mb-1">Signal Integrity</span>
-                    <span className={`text-xl font-mono font-bold ${stats.daysSober > 0 ? 'text-emerald-500' : 'text-zinc-500'}`}>
+                    <span className={`text-xl font-mono font-bold ${stats.daysSober > 0 ? 'text-ember-500 glow' : 'text-zinc-500'}`}>
                       {stats.daysSober} DAYS
                     </span>
                  </div>
                  <div className="w-px h-8 bg-zinc-800 mx-2 hidden sm:block"></div>
-                 <button onClick={(e) => { e.stopPropagation(); onRelapse(); }} className="flex items-center gap-2 text-xs text-zinc-600 hover:text-red-500 transition-colors uppercase tracking-wider font-bold px-2 py-1 hover:bg-red-950/10 rounded">
+                 <button onClick={(e) => { e.stopPropagation(); onRelapse(); }} className="flex items-center gap-2 text-xs text-zinc-600 hover:text-red-500 transition-colors uppercase tracking-wider font-bold px-2 py-1 hover:bg-red-950/10 rounded interactive">
                    <AlertOctagon size={14} /> Relapse
                  </button>
               </div>
@@ -405,15 +405,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
 
       {/* EXPANDABLE ANALYTICS */}
       <div className="w-full max-w-4xl mx-auto border-t border-zinc-900">
-        <button onClick={() => setShowAnalytics(!showAnalytics)} className="w-full py-4 flex items-center justify-center gap-2 text-zinc-600 hover:text-zinc-300 transition-colors uppercase tracking-widest text-xs font-mono">
+        <button onClick={() => setShowAnalytics(!showAnalytics)} className="w-full py-4 flex items-center justify-center gap-2 text-zinc-600 hover:text-zinc-300 transition-colors uppercase tracking-widest text-xs font-mono interactive">
           {showAnalytics ? <><ChevronUp size={14} /> Hide Audit</> : <><ChevronDown size={14} /> Audit Performance</>}
         </button>
 
         {showAnalytics && (
-          <div className="pb-20 space-y-6 animate-in slide-in-from-bottom-4 duration-500 px-4">
+          <div className="pb-20 space-y-6 animate-slide-up px-4">
             
             {/* HEATMAP LEDGER */}
-            <div className="p-6 border border-zinc-800 bg-zinc-950/50">
+            <div className="card-glass border-zinc-800">
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Grid size={12} /> Monthly Consistency Grid
                </div>
@@ -421,15 +421,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-               <Card className="bg-zinc-900/30"><DeltaIndicator label="Daily Alpha (Reps)" current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
-               <Card className="bg-zinc-900/30">
+               <Card className="glass border-zinc-800"><DeltaIndicator label="Daily Alpha (Reps)" current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
+               <Card className="glass border-zinc-800">
                  <DeltaIndicator label="Sober Efficiency (SER)" current={stats.today.ser} previous={Number(stats.globalSER)} />
                  {stats.today.ser === "NOISE" && <div className="text-[10px] text-zinc-600 font-mono mt-2 flex items-center gap-1"><Activity size={10} /> Log &gt; 5 mins</div>}
                </Card>
             </div>
 
             {/* WEEKLY BUDGET BALANCE */}
-            <Card className="bg-zinc-900/50">
+            <Card className="glass border-zinc-800">
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest flex items-center gap-2">
@@ -445,7 +445,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Total Balance</div>
                     <div className={`text-2xl font-mono font-bold ${
                       stats.weeklyBudgetBalance.totalBalance > 0 
-                        ? 'text-emerald-500' 
+                        ? 'text-ember-500' 
                         : stats.weeklyBudgetBalance.totalBalance < 0 
                           ? 'text-red-500' 
                           : 'text-zinc-600'
