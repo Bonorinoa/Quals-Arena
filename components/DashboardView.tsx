@@ -142,7 +142,7 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-3">Sessions ({daySessions.length})</div>
                      <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
                         {daySessions.map((session) => (
-                           <div key={session.id} className="glass-subtle border-zinc-800 p-3 rounded elevated-sm">
+                           <div key={session.id} className="glass-subtle border-zinc-800 p-3 rounded elevated">
                               <div className="flex justify-between items-start mb-2">
                                  <div className="text-sm text-white font-mono">{(session.durationSeconds / 60).toFixed(0)}m</div>
                                  <div className="text-sm text-ember-500 font-mono font-bold">{session.reps} reps</div>
