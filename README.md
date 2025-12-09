@@ -122,16 +122,26 @@ To enable the "Back up to Google Sheets" feature:
 
 ---
 
-## Planning & Development Documents
+## Documentation
 
-For contributors and those interested in the future of highBeta:
+For comprehensive documentation, see **[/docs](./docs/README.md)**
 
-*   **[V4_ROADMAP.md](./V4_ROADMAP.md)** - Comprehensive v4.0 feature gap analysis (27 features identified)
-*   **[SURPLUS_CAP_STRATEGY.md](./SURPLUS_CAP_STRATEGY.md)** - Gaming prevention strategies and anti-gaming mechanisms
-*   **[CLOUD_BACKUP_ALTERNATIVES.md](./CLOUD_BACKUP_ALTERNATIVES.md)** - Authentication provider comparison and implementation guide
-*   **[USER_FEEDBACK_RESPONSE.md](./USER_FEEDBACK_RESPONSE.md)** - Summary of recent user feedback responses
-*   **[V3_EVALUATION_REPORT.md](./V3_EVALUATION_REPORT.md)** - v3.0 testing and validation results
+### Quick Links
+
+**Essential Documentation:**
 *   **[CHANGELOG.md](./CHANGELOG.md)** - Version history and release notes
+*   **[Documentation Index](./docs/README.md)** - Complete documentation guide
+
+**Planning & Strategy** (`/docs/planning`):
+*   **[V4_FOUNDATION.md](./docs/planning/V4_FOUNDATION.md)** - Detailed architectural foundations for v4.x (NEW ✨)
+*   **[V4_ROADMAP.md](./docs/planning/V4_ROADMAP.md)** - Comprehensive v4.0 feature gap analysis (27 features)
+*   **[SURPLUS_CAP_STRATEGY.md](./docs/planning/SURPLUS_CAP_STRATEGY.md)** - Gaming prevention strategies analysis
+*   **[CLOUD_BACKUP_ALTERNATIVES.md](./docs/planning/CLOUD_BACKUP_ALTERNATIVES.md)** - Authentication options guide
+
+**Development Documentation** (`/docs/development`):
+*   **[DESIGN_SYSTEM.md](./docs/development/DESIGN_SYSTEM.md)** - UI/UX design system and guidelines
+*   **[TEST_DOCUMENTATION.md](./docs/development/TEST_DOCUMENTATION.md)** - Test suite guide and debugging tips
+*   **[V3_EVALUATION_REPORT.md](./docs/development/V3_EVALUATION_REPORT.md)** - v3.0 testing results (95 tests)
 
 ---
 *"Owners build assets; employees log hours."*
