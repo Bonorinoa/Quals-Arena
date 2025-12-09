@@ -121,4 +121,17 @@ To enable the "Back up to Google Sheets" feature:
 *   **No "Social" Features:** This is a single-player game. You vs. You.
 
 ---
+
+## Planning & Development Documents
+
+For contributors and those interested in the future of highBeta:
+
+*   **[V4_ROADMAP.md](./V4_ROADMAP.md)** - Comprehensive v4.0 feature gap analysis (27 features identified)
+*   **[SURPLUS_CAP_STRATEGY.md](./SURPLUS_CAP_STRATEGY.md)** - Gaming prevention strategies and anti-gaming mechanisms
+*   **[CLOUD_BACKUP_ALTERNATIVES.md](./CLOUD_BACKUP_ALTERNATIVES.md)** - Authentication provider comparison and implementation guide
+*   **[USER_FEEDBACK_RESPONSE.md](./USER_FEEDBACK_RESPONSE.md)** - Summary of recent user feedback responses
+*   **[V3_EVALUATION_REPORT.md](./V3_EVALUATION_REPORT.md)** - v3.0 testing and validation results
+*   **[CHANGELOG.md](./CHANGELOG.md)** - Version history and release notes
+
+---
 *"Owners build assets; employees log hours."*
