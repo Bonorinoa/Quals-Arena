@@ -25,6 +25,8 @@ enableIndexedDbPersistence(db).catch((err) => {
     console.warn('Offline persistence failed: Multiple tabs open');
   } else if (err.code === 'unimplemented') {
     console.warn('Offline persistence not available in this browser');
+  } else {
+    console.warn('Offline persistence failed:', err.code, err.message);
   }
 });
 

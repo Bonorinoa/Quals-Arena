@@ -8,6 +8,7 @@ import { WelcomeView } from './components/WelcomeView';
 import { AuthModal } from './components/AuthModal';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
+import { STORAGE_KEYS } from './services/storage';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud } from './services/firebaseSync';
 
@@ -77,8 +78,8 @@ function AppContent() {
       setSettings(mergedSettings);
       
       // Update localStorage with merged data
-      localStorage.setItem('highbeta_sessions', JSON.stringify(mergedSessions));
-      localStorage.setItem('highbeta_settings', JSON.stringify(mergedSettings));
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(mergedSessions));
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(mergedSettings));
       
       setSyncStatus('synced');
       

@@ -62,10 +62,14 @@ export const performFullSync = async (
     getSettingsFromCloud(userId)
   ]);
 
-  // Merge sessions (deduplicate by ID)
+  // Merge sessions (deduplicate by ID, keep most recent based on timestamp)
   const sessionMap = new Map<string, Session>();
   [...localSessions, ...cloudSessions].forEach(session => {
-    sessionMap.set(session.id, session);
+    const existing = sessionMap.get(session.id);
+    // Keep the session with the most recent timestamp
+    if (!existing || session.timestamp > existing.timestamp) {
+      sessionMap.set(session.id, session);
+    }
   });
   const mergedSessions = Array.from(sessionMap.values())
     .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp descending

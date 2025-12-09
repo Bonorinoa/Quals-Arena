@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
   SYNC_QUEUE: 'highbeta_sync_queue'
 };
 
+export { STORAGE_KEYS };
+
 export const CURRENT_VERSION = '1.3';
 
 // Re-export for backward compatibility
@@ -207,6 +209,10 @@ export const processSyncQueue = async () => {
 /**
  * Optional callback for syncing a session to Firebase after saving to localStorage
  * This should be set by App.tsx when a user is authenticated
+ * 
+ * Note: Using module-level mutable variables here is intentional to keep the storage
+ * service decoupled from Firebase. This allows the storage service to remain simple
+ * and backward-compatible while enabling optional cloud sync without dependencies.
  */
 export let cloudSyncCallback: ((session: Session) => Promise<void>) | null = null;
 
