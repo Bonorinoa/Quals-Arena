@@ -10,6 +10,7 @@ import {
   analyzeCommitmentPatterns,
   MIN_DURATION_THRESHOLD_SECONDS,
   MAX_SURPLUS_RATIO,
+  MIN_COMMITMENT_SECONDS,
 } from '../utils/sessionUtils';
 import { Session } from '../types';
 
@@ -376,7 +377,7 @@ describe('sessionUtils', () => {
         id: `${i}`,
         timestamp: 0,
         durationSeconds: 3600,
-        targetDurationSeconds: 1800, // 30 minutes (minimum)
+        targetDurationSeconds: MIN_COMMITMENT_SECONDS, // 30 minutes (minimum)
         reps: 5,
         notes: '',
         date: `2024-01-${String(i + 1).padStart(2, '0')}`,
@@ -413,7 +414,7 @@ describe('sessionUtils', () => {
         id: `${i}`,
         timestamp: 0,
         durationSeconds: 3600,
-        targetDurationSeconds: 1800, // All minimum
+        targetDurationSeconds: MIN_COMMITMENT_SECONDS, // All minimum
         reps: 5,
         notes: '',
         date: `2024-01-${String(i + 1).padStart(2, '0')}`,
@@ -443,9 +444,9 @@ describe('sessionUtils', () => {
     it('should handle mixed commitment levels correctly', () => {
       const sessions: Session[] = [
         // 3 x 30m
-        { id: '1', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: 1800, reps: 5, notes: '', date: '2024-01-01' },
-        { id: '2', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: 1800, reps: 5, notes: '', date: '2024-01-02' },
-        { id: '3', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: 1800, reps: 5, notes: '', date: '2024-01-03' },
+        { id: '1', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-01' },
+        { id: '2', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-02' },
+        { id: '3', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-03' },
         // 7 x 2h
         ...Array(7).fill(null).map((_, i) => ({
           id: `${i + 4}`,

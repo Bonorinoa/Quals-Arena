@@ -18,6 +18,12 @@ export const MIN_DURATION_THRESHOLD_SECONDS = 300;
 export const MAX_SURPLUS_RATIO = 0.5;
 
 /**
+ * Minimum commitment duration (in seconds) - 30 minutes
+ * This is the minimum target duration users can select
+ */
+export const MIN_COMMITMENT_SECONDS = 1800;
+
+/**
  * Calculate total duration in seconds for a set of sessions
  * @param sessions - Array of sessions
  * @returns Total duration in seconds
@@ -195,7 +201,6 @@ export const analyzeCommitmentPatterns = (sessions: Session[]): {
     };
   }
 
-  const MIN_COMMITMENT = 30 * 60; // 30 minutes in seconds
   const LOW_PATTERN_THRESHOLD = 0.7; // 70% minimum commitment sessions
   const MIN_SESSIONS_FOR_PATTERN = 10; // Need at least 10 sessions to detect pattern
   
@@ -218,7 +223,7 @@ export const analyzeCommitmentPatterns = (sessions: Session[]): {
 
   // Calculate ratio of minimum commitment sessions
   const minCommitmentCount = sessionsWithCommitment.filter(
-    s => s.targetDurationSeconds === MIN_COMMITMENT
+    s => s.targetDurationSeconds === MIN_COMMITMENT_SECONDS
   ).length;
   const minimumCommitmentRatio = minCommitmentCount / sessionsWithCommitment.length;
 
