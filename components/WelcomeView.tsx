@@ -8,23 +8,23 @@ interface WelcomeViewProps {
 
 export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-start justify-center p-2 sm:p-4 animate-in fade-in duration-300 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-start justify-center p-2 sm:p-4 animate-fade-in overflow-y-auto">
       <div className="w-full max-w-2xl my-4 sm:my-auto">
         {/* Main Glass Card */}
-        <div className="bg-zinc-900/30 backdrop-blur-xl border border-zinc-700/50 shadow-2xl rounded-lg animate-in zoom-in-95 duration-300" style={{ maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
+        <div className="glass-strong shadow-glass-lg rounded-lg animate-scale-in" style={{ maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
           
           {/* Header */}
           <div className="relative p-4 sm:p-8 pb-4 sm:pb-6">
             <button 
               onClick={onClose} 
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 text-zinc-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 text-zinc-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full interactive"
               aria-label="Close welcome"
             >
               <X size={20} />
             </button>
             
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white rotate-45"></div>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white rotate-45 shadow-glow"></div>
               <h1 className="text-2xl sm:text-4xl font-mono font-bold tracking-tighter text-white">highBeta</h1>
             </div>
             
@@ -32,16 +32,16 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
               Welcome to the <span className="text-white font-semibold">High Patience Protocol</span>
             </p>
             <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-              A performance analytics dashboard for tracking your most valuable asset: <span className="text-white">cognitive capacity</span>.
+              A performance analytics dashboard for tracking your most valuable asset: <span className="text-gradient font-semibold">cognitive capacity</span>.
             </p>
           </div>
 
           {/* Core Concepts - Condensed */}
           <div className="px-4 sm:px-8 pb-4 sm:pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-              <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-700/50 p-3 sm:p-4 rounded-lg">
+              <div className="glass border-zinc-700/50 p-3 sm:p-4 rounded-lg elevated interactive">
                 <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                  <Timer size={14} className="text-emerald-400" />
+                  <Timer size={14} className="text-ember-500" />
                   <h3 className="text-white font-semibold text-[10px] sm:text-xs uppercase tracking-wider">The Arena</h3>
                 </div>
                 <p className="text-zinc-400 text-[10px] sm:text-xs leading-relaxed">
@@ -49,9 +49,9 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
                 </p>
               </div>
 
-              <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-700/50 p-3 sm:p-4 rounded-lg">
+              <div className="glass border-zinc-700/50 p-3 sm:p-4 rounded-lg elevated interactive">
                 <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                  <TrendingUp size={14} className="text-emerald-400" />
+                  <TrendingUp size={14} className="text-ember-500" />
                   <h3 className="text-white font-semibold text-[10px] sm:text-xs uppercase tracking-wider">Track Progress</h3>
                 </div>
                 <p className="text-zinc-400 text-[10px] sm:text-xs leading-relaxed">
@@ -59,9 +59,9 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
                 </p>
               </div>
 
-              <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-700/50 p-3 sm:p-4 rounded-lg">
+              <div className="glass border-zinc-700/50 p-3 sm:p-4 rounded-lg elevated interactive">
                 <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                  <Shield size={14} className="text-emerald-400" />
+                  <Shield size={14} className="text-ember-500" />
                   <h3 className="text-white font-semibold text-[10px] sm:text-xs uppercase tracking-wider">Signal Integrity</h3>
                 </div>
                 <p className="text-zinc-400 text-[10px] sm:text-xs leading-relaxed">
@@ -69,9 +69,9 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
                 </p>
               </div>
 
-              <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-700/50 p-3 sm:p-4 rounded-lg">
+              <div className="glass border-zinc-700/50 p-3 sm:p-4 rounded-lg elevated interactive">
                 <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                  <Zap size={14} className="text-emerald-400" />
+                  <Zap size={14} className="text-ember-500" />
                   <h3 className="text-white font-semibold text-[10px] sm:text-xs uppercase tracking-wider">Build Assets</h3>
                 </div>
                 <p className="text-zinc-400 text-[10px] sm:text-xs leading-relaxed">
@@ -83,26 +83,26 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
 
           {/* Quick Start - Simplified */}
           <div className="px-4 sm:px-8 pb-4 sm:pb-6">
-            <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-700/50 p-4 sm:p-5 rounded-lg">
+            <div className="glass border-zinc-700/50 p-4 sm:p-5 rounded-lg elevated">
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-ember-500" />
                 <h2 className="text-[10px] sm:text-sm font-bold uppercase tracking-widest text-white font-mono">Quick Start</h2>
               </div>
               <ol className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-zinc-400">
                 <li className="flex gap-2">
-                  <span className="text-emerald-400 font-mono font-bold min-w-[1.5rem]">1.</span>
+                  <span className="text-ember-500 font-mono font-bold min-w-[1.5rem]">1.</span>
                   <span>Configure your daily goal in <span className="text-white">Settings</span> (bottom right)</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-400 font-mono font-bold min-w-[1.5rem]">2.</span>
+                  <span className="text-ember-500 font-mono font-bold min-w-[1.5rem]">2.</span>
                   <span>Click <span className="text-white">"Enter The Arena"</span> and choose a duration</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-400 font-mono font-bold min-w-[1.5rem]">3.</span>
+                  <span className="text-ember-500 font-mono font-bold min-w-[1.5rem]">3.</span>
                   <span>Work distraction-free until completion</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-400 font-mono font-bold min-w-[1.5rem]">4.</span>
+                  <span className="text-ember-500 font-mono font-bold min-w-[1.5rem]">4.</span>
                   <span>Log your reps and review your progress</span>
                 </li>
               </ol>
@@ -113,7 +113,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onClose }) => {
           <div className="p-4 sm:p-6 bg-gradient-to-t from-zinc-900/50 to-transparent">
             <button 
               onClick={onClose}
-              className="w-full py-3 sm:py-4 bg-white text-black font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-zinc-200 transition-colors rounded"
+              className="btn-primary w-full"
             >
               Enter The Protocol
             </button>

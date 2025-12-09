@@ -50,13 +50,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 animate-in fade-in duration-200 overflow-y-auto">
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200 my-4 sm:my-auto" style={{ maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-lg flex items-start justify-center p-2 sm:p-4 animate-fade-in overflow-y-auto">
+      <div className="w-full max-w-md glass-strong border-zinc-800 shadow-glass-lg animate-scale-in my-4 sm:my-auto" style={{ maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
           <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 font-mono">
             Protocol Configuration
           </h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors interactive">
             <X size={20} />
           </button>
         </div>
@@ -70,7 +70,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-3 font-mono text-sm focus:border-white outline-none"
+              className="input-glass"
             />
           </div>
 
@@ -96,7 +96,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
                     }
                   }
                 }}
-                className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-3 font-mono text-xl focus:border-emerald-500 outline-none"
+                className="input-glass text-xl"
               />
             </div>
             <div>
@@ -119,7 +119,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
                     }
                   }
                 }}
-                className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 p-3 font-mono text-xl focus:border-emerald-500 outline-none"
+                className="input-glass text-xl"
               />
             </div>
           </div>
@@ -136,7 +136,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
               placeholder="https://script.google.com/macros/s/..."
               value={formData.googleSheetsUrl || ''}
               onChange={(e) => handleChange('googleSheetsUrl', e.target.value)}
-              className={`w-full bg-zinc-950 border ${urlError ? 'border-red-500' : 'border-zinc-700'} text-zinc-100 p-3 font-mono text-xs focus:border-white outline-none mb-2`}
+              className={`input-glass ${urlError ? 'border-red-500' : ''} mb-2`}
             />
             {urlError && <p className="text-red-500 text-[10px] flex items-center gap-1 mb-2"><AlertTriangle size={10} /> {urlError}</p>}
             
@@ -146,7 +146,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
                    type="button"
                    onClick={handleTestConnection}
                    disabled={isTesting}
-                   className="text-[10px] text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1 bg-zinc-800 px-3 py-2 rounded"
+                   className="text-[10px] text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1 glass px-3 py-2 rounded interactive"
                  >
                    {isTesting ? 'Pinging...' : 'Test Connection'}
                  </button>
@@ -154,7 +154,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
                    type="button"
                    onClick={handleManualSync}
                    disabled={isSyncing}
-                   className="text-[10px] text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1 bg-zinc-800 px-3 py-2 rounded"
+                   className="text-[10px] text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1 glass px-3 py-2 rounded interactive"
                  >
                    <RefreshCw size={10} className={isSyncing ? 'animate-spin' : ''} /> 
                    {isSyncing ? 'Syncing...' : 'Force Sync'}
@@ -166,7 +166,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
           <div className="pt-4 border-t border-zinc-800">
             <button
               type="submit"
-              className="w-full py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="btn-primary w-full"
             >
               <Save size={16} />
               Sign & Update Contract
