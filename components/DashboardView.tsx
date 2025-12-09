@@ -16,7 +16,7 @@ import {
 import { getLocalDate } from '../services/storage';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
-import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance } from '../utils/sessionUtils';
+import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance, analyzeCommitmentPatterns } from '../utils/sessionUtils';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -295,6 +295,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const dailyGoalSeconds = (settings.dailyTimeGoalHours || 4) * 3600;
     const volumeProgress = Math.min((todayDuration / dailyGoalSeconds) * 100, 100);
 
+    // Commitment pattern analysis
+    const commitmentPattern = analyzeCommitmentPatterns(sessions);
+
     return {
       today: { 
         reps: todayReps, 
@@ -315,7 +318,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       timeBudget: {
         goalSeconds: dailyGoalSeconds,
         volumeProgress: volumeProgress,
-      }
+      },
+      commitmentPattern,
     };
   }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours]);
 
@@ -509,6 +513,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                     </div>
                     <div className="text-xs text-red-300 font-mono">
                       Average daily deficit exceeds 1 hour. Consider adjusting commitment levels or increasing work duration.
+                    </div>
+                  </div>
+                )}
+
+                {/* Commitment Pattern Alert */}
+                {stats.commitmentPattern.hasLowCommitmentPattern && (
+                  <div className="mt-2 p-3 bg-amber-950/30 border border-amber-900/50 rounded">
+                    <div className="text-[10px] text-amber-400 uppercase tracking-wider font-mono mb-1 flex items-center gap-1">
+                      <AlertOctagon size={10} /> Commitment Pattern Alert
+                    </div>
+                    <div className="text-xs text-amber-300 font-mono mb-1">
+                      {Math.round(stats.commitmentPattern.minimumCommitmentRatio * 100)}% of your sessions use the minimum commitment (30m).
+                    </div>
+                    <div className="text-[10px] text-amber-400/80 font-mono">
+                      Current avg: {Math.round(stats.commitmentPattern.averageCommitment / 60)}m • Suggested: 60m+
+                    </div>
+                    <div className="text-[10px] text-amber-500/60 font-mono mt-1">
+                      Higher pre-commitments build genuine alpha. Surplus is capped at 50% of commitment.
                     </div>
                   </div>
                 )}

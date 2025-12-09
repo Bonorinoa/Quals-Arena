@@ -7,7 +7,10 @@ import {
   getSessionBudgetBalance,
   getDailyBudgetBalance,
   getWeeklyBudgetBalance,
+  analyzeCommitmentPatterns,
   MIN_DURATION_THRESHOLD_SECONDS,
+  MAX_SURPLUS_RATIO,
+  MIN_COMMITMENT_SECONDS,
 } from '../utils/sessionUtils';
 import { Session } from '../types';
 
@@ -247,6 +250,218 @@ describe('sessionUtils', () => {
       
       expect(result.totalBalance).toBe(400);
       expect(result.daysWithSessions).toBe(1);
+    });
+  });
+
+  describe('Surplus Cap (Proportional)', () => {
+    it('should cap surplus at 50% of commitment (2h commit, 4h actual)', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 14400, // 4 hours
+        targetDurationSeconds: 7200, // 2 hours
+        reps: 10,
+        notes: '',
+        date: '2024-01-01',
+      };
+      // Raw surplus would be 7200s (2h), but capped at 3600s (1h = 50% of 2h)
+      expect(getSessionBudgetBalance(session)).toBe(3600);
+    });
+
+    it('should cap surplus at 50% of commitment (30m commit, 2h actual)', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 7200, // 2 hours
+        targetDurationSeconds: 1800, // 30 minutes
+        reps: 8,
+        notes: '',
+        date: '2024-01-01',
+      };
+      // Raw surplus would be 5400s (90m), but capped at 900s (15m = 50% of 30m)
+      expect(getSessionBudgetBalance(session)).toBe(900);
+    });
+
+    it('should not cap surplus when within 50% threshold', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 5400, // 90 minutes
+        targetDurationSeconds: 3600, // 1 hour
+        reps: 7,
+        notes: '',
+        date: '2024-01-01',
+      };
+      // Surplus is 1800s (30m), which is exactly 50%, so not capped
+      expect(getSessionBudgetBalance(session)).toBe(1800);
+    });
+
+    it('should not cap deficits (allow full deficit)', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 1800, // 30 minutes
+        targetDurationSeconds: 7200, // 2 hours
+        reps: 3,
+        notes: '',
+        date: '2024-01-01',
+      };
+      // Deficit of 5400s (90m) should not be capped
+      expect(getSessionBudgetBalance(session)).toBe(-5400);
+    });
+
+    it('should handle exact commitment match (no surplus/deficit)', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 3600,
+        targetDurationSeconds: 3600,
+        reps: 5,
+        notes: '',
+        date: '2024-01-01',
+      };
+      expect(getSessionBudgetBalance(session)).toBe(0);
+    });
+
+    it('should handle 4h commitment with massive overperformance', () => {
+      const session: Session = {
+        id: '1',
+        timestamp: 0,
+        durationSeconds: 28800, // 8 hours
+        targetDurationSeconds: 14400, // 4 hours
+        reps: 20,
+        notes: '',
+        date: '2024-01-01',
+      };
+      // Raw surplus would be 14400s (4h), but capped at 7200s (2h = 50% of 4h)
+      expect(getSessionBudgetBalance(session)).toBe(7200);
+    });
+
+    it('should verify MAX_SURPLUS_RATIO constant is 0.5', () => {
+      expect(MAX_SURPLUS_RATIO).toBe(0.5);
+    });
+  });
+
+  describe('analyzeCommitmentPatterns', () => {
+    it('should return zeroes for empty sessions array', () => {
+      const result = analyzeCommitmentPatterns([]);
+      expect(result.averageCommitment).toBe(0);
+      expect(result.minimumCommitmentRatio).toBe(0);
+      expect(result.hasLowCommitmentPattern).toBe(false);
+    });
+
+    it('should return zeroes when no sessions have commitments', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 3600, reps: 5, notes: '', date: '2024-01-01' },
+        { id: '2', timestamp: 0, durationSeconds: 2400, reps: 3, notes: '', date: '2024-01-02' },
+      ];
+      const result = analyzeCommitmentPatterns(sessions);
+      expect(result.averageCommitment).toBe(0);
+      expect(result.minimumCommitmentRatio).toBe(0);
+      expect(result.hasLowCommitmentPattern).toBe(false);
+    });
+
+    it('should calculate average commitment correctly', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: 3600, reps: 5, notes: '', date: '2024-01-01' },
+        { id: '2', timestamp: 0, durationSeconds: 5400, targetDurationSeconds: 7200, reps: 8, notes: '', date: '2024-01-02' },
+        { id: '3', timestamp: 0, durationSeconds: 4500, targetDurationSeconds: 5400, reps: 6, notes: '', date: '2024-01-03' },
+      ];
+      const result = analyzeCommitmentPatterns(sessions);
+      // Average: (3600 + 7200 + 5400) / 3 = 5400
+      expect(result.averageCommitment).toBe(5400);
+    });
+
+    it('should detect low commitment pattern (80% minimum)', () => {
+      const sessions: Session[] = Array(10).fill(null).map((_, i) => ({
+        id: `${i}`,
+        timestamp: 0,
+        durationSeconds: 3600,
+        targetDurationSeconds: MIN_COMMITMENT_SECONDS, // 30 minutes (minimum)
+        reps: 5,
+        notes: '',
+        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      }));
+      
+      // Add 2 sessions with higher commitment
+      sessions.push({
+        id: '10',
+        timestamp: 0,
+        durationSeconds: 7200,
+        targetDurationSeconds: 7200, // 2 hours
+        reps: 10,
+        notes: '',
+        date: '2024-01-11',
+      });
+      sessions.push({
+        id: '11',
+        timestamp: 0,
+        durationSeconds: 3600,
+        targetDurationSeconds: 3600, // 1 hour
+        reps: 7,
+        notes: '',
+        date: '2024-01-12',
+      });
+
+      const result = analyzeCommitmentPatterns(sessions);
+      // 10 out of 12 sessions are minimum (83.3%)
+      expect(result.minimumCommitmentRatio).toBeCloseTo(0.833, 2);
+      expect(result.hasLowCommitmentPattern).toBe(true);
+    });
+
+    it('should not flag pattern with less than 10 sessions', () => {
+      const sessions: Session[] = Array(5).fill(null).map((_, i) => ({
+        id: `${i}`,
+        timestamp: 0,
+        durationSeconds: 3600,
+        targetDurationSeconds: MIN_COMMITMENT_SECONDS, // All minimum
+        reps: 5,
+        notes: '',
+        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      }));
+
+      const result = analyzeCommitmentPatterns(sessions);
+      expect(result.minimumCommitmentRatio).toBe(1.0); // 100% minimum
+      expect(result.hasLowCommitmentPattern).toBe(false); // But not flagged (< 10 sessions)
+    });
+
+    it('should not flag pattern when minimum ratio is below threshold', () => {
+      const sessions: Session[] = Array(10).fill(null).map((_, i) => ({
+        id: `${i}`,
+        timestamp: 0,
+        durationSeconds: 7200,
+        targetDurationSeconds: 7200, // All 2 hours
+        reps: 10,
+        notes: '',
+        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      }));
+
+      const result = analyzeCommitmentPatterns(sessions);
+      expect(result.minimumCommitmentRatio).toBe(0); // 0% minimum
+      expect(result.hasLowCommitmentPattern).toBe(false);
+    });
+
+    it('should handle mixed commitment levels correctly', () => {
+      const sessions: Session[] = [
+        // 3 x 30m
+        { id: '1', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-01' },
+        { id: '2', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-02' },
+        { id: '3', timestamp: 0, durationSeconds: 3600, targetDurationSeconds: MIN_COMMITMENT_SECONDS, reps: 5, notes: '', date: '2024-01-03' },
+        // 7 x 2h
+        ...Array(7).fill(null).map((_, i) => ({
+          id: `${i + 4}`,
+          timestamp: 0,
+          durationSeconds: 7200,
+          targetDurationSeconds: 7200,
+          reps: 10,
+          notes: '',
+          date: `2024-01-${String(i + 4).padStart(2, '0')}`,
+        })),
+      ];
+
+      const result = analyzeCommitmentPatterns(sessions);
+      expect(result.minimumCommitmentRatio).toBe(0.3); // 3/10 = 30%
+      expect(result.hasLowCommitmentPattern).toBe(false); // Below 70% threshold
     });
   });
 });

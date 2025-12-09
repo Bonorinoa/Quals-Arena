@@ -5,6 +5,49 @@ All notable changes to the highBeta project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2024-12-09
+
+### Added - Gaming Prevention & Protocol Integrity
+- **Proportional Surplus Cap**: Surpluses now capped at 50% of commitment
+  - Prevents gaming via systematic under-commitment
+  - Maintains fairness: 2h commitment → max 1h surplus, 30m commitment → max 15m surplus
+  - Deficits never capped (full accountability)
+  - Backward compatible with existing sessions
+  - Documented in SURPLUS_CAP_STRATEGY.md
+- **Commitment Pattern Analysis**: Behavioral nudge system
+  - Tracks average commitment levels across sessions
+  - Detects low commitment patterns (70%+ minimum commitment with 10+ sessions)
+  - Non-punitive educational warnings
+  - Displays on Dashboard with actionable suggestions
+- **Enhanced Dashboard Warnings**: New alert card system
+  - Commitment Pattern Alert (amber) when gaming detected
+  - Shows minimum commitment ratio and average
+  - Suggests higher pre-commitments for building genuine alpha
+  - Explains surplus cap mechanism
+
+### Changed
+- **Budget Balance Calculation**: Now includes proportional cap logic
+  - `getSessionBudgetBalance()` updated with MAX_SURPLUS_RATIO (0.5)
+  - Weekly budget calculations use capped values
+  - Clear documentation in code comments
+
+### Technical
+- **Test Coverage**: Expanded from 81 to 95 tests
+  - 7 new tests for surplus cap edge cases
+  - 7 new tests for commitment pattern analysis
+  - All tests passing (100% pass rate)
+- **Code Quality**: Enhanced documentation
+  - Added comprehensive JSDoc comments
+  - Included usage examples in function documentation
+  - Updated type definitions
+
+### Documentation
+- Implemented recommendations from SURPLUS_CAP_STRATEGY.md
+- Completed v3.x development as outlined in V4_ROADMAP.md
+- Phase 1 (Proportional Cap) and Phase 2 (Behavioral Nudge) complete
+
+---
+
 ## [3.0.0] - 2024-12-09
 
 ### Added
