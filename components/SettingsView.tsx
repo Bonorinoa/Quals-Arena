@@ -166,7 +166,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
           <div className="pt-4 border-t border-zinc-800">
             <button
               type="submit"
-              className="btn-primary w-full"
+              className="btn-primary w-full flex items-center justify-center gap-2"
             >
               <Save size={16} />
               Sign & Update Contract

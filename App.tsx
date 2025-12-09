@@ -134,17 +134,6 @@ export default function App() {
           <div className="w-3 h-3 bg-white rotate-45 shadow-glow"></div>
           <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">highBeta</span>
         </div>
-        
-        <div className="flex gap-2">
-           {view === ViewMode.DASHBOARD && (
-             <button 
-              onClick={() => setView(ViewMode.FOCUS)}
-              className="btn-primary"
-             >
-               Enter The Arena
-             </button>
-           )}
-        </div>
       </nav>
 
       {/* Main Content Area */}

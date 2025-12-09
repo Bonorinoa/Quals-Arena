@@ -447,7 +447,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
             </div>
 
             <div className="pt-4 flex gap-4">
-               <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 border border-white/10 text-zinc-400 font-bold hover:bg-white/5 uppercase text-xs tracking-widest rounded-lg">Discard</button>
+               {seconds <= 600 ? (
+                 <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 border border-white/10 text-zinc-400 font-bold hover:bg-white/5 uppercase text-xs tracking-widest rounded-lg">Discard</button>
+               ) : (
+                 <div className="flex-1 py-4 border border-zinc-800 text-zinc-700 font-bold uppercase text-xs tracking-widest rounded-lg text-center cursor-not-allowed" title="Cannot discard sessions longer than 10 minutes">
+                   Discard Locked
+                 </div>
+               )}
                <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 uppercase text-xs tracking-widest flex items-center justify-center gap-2 rounded-lg shadow-lg shadow-white/10">
                  <Save size={16} /> {isSubmitting ? 'Minting...' : 'Log Asset'}
                </button>
