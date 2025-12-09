@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-**Observation**: The current design allows users to adversarially select the minimum commitment contract (30 minutes) and let the clock run to accumulate budget surpluses, which could be exploited to game the system.
+**Observation**: The current design allows users to select the minimum commitment contract (30 minutes) and run extended sessions. This behavior can be exploited to game the system by accumulating budget surpluses.
 
 **Proposed Initial Solution**: Cap the maximum surplus at 30 minutes.
 

@@ -210,7 +210,10 @@ We need a simpler, more user-friendly way to back up user data that doesn't requ
   - 1 GB stored data
   - 10 GB bandwidth/month
 - **Typical usage**: $0-5/month for 1000+ users
+  - Costs scale with: database reads/writes, stored data size, and bandwidth
+  - Most apps stay within free tier initially
 - **At scale (10K users)**: ~$10-30/month
+  - Primarily driven by read/write operations and concurrent connections
 
 **Pros**:
 - ✅ Easiest to implement (2-3 days for basic setup)
