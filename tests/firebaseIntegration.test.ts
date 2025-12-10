@@ -34,12 +34,12 @@ import * as firestore from 'firebase/firestore';
  * Comprehensive Firebase Integration Tests for Category 1
  * 
  * Testing Areas:
- * 1. Firebase Authentication Integration (1.1)
- * 2. Firestore Data Sync (1.2)
- * 3. Multi-Device Conflict Resolution (1.3)
- * 4. Offline/Online Transitions
- * 5. Error Recovery and Retry Logic
- * 6. Data Migration and Initial Sync
+ * - Firebase Authentication Integration (1.1)
+ * - Firestore Data Sync (1.2)
+ * - Multi-Device Conflict Resolution (1.3)
+ * - Offline/Online Transitions
+ * - Error Recovery and Retry Logic
+ * - Data Migration and Initial Sync
  */
 
 describe('Firebase Integration - Category 1 Comprehensive Tests', () => {
@@ -626,7 +626,7 @@ describe('Firebase Integration - Category 1 Comprehensive Tests', () => {
         return undefined;
       });
       
-      const specialNotes = 'Test with 中文, emoji 🎉, and symbols: <>&"\'';
+      const specialNotes = `Test with 中文, emoji 🎉, and symbols: <>&"'`;
       const session = createMockSession('session-1', Date.now(), specialNotes);
       
       await syncSingleSessionToCloud(mockUserId, session);
