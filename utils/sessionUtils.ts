@@ -238,3 +238,32 @@ export const analyzeCommitmentPatterns = (sessions: Session[]): {
     hasLowCommitmentPattern,
   };
 };
+
+/**
+ * Daily limit threshold in hours
+ * This is the recommended maximum for sustainable productivity
+ */
+export const DAILY_LIMIT_HOURS = 6;
+
+/**
+ * Calculate total session time for a specific date
+ * @param sessions - Array of sessions
+ * @param date - Date string in YYYY-MM-DD format
+ * @returns Total time in hours
+ */
+export const getDailyTotalHours = (sessions: Session[], date: string): number => {
+  const daySessions = getSessionsByDate(sessions, date);
+  const totalSeconds = getTotalDuration(daySessions);
+  return totalSeconds / 3600;
+};
+
+/**
+ * Check if daily limit has been exceeded
+ * @param sessions - Array of sessions
+ * @param date - Date string in YYYY-MM-DD format
+ * @returns true if the daily limit (6 hours) has been exceeded
+ */
+export const isDailyLimitExceeded = (sessions: Session[], date: string): boolean => {
+  const totalHours = getDailyTotalHours(sessions, date);
+  return totalHours > DAILY_LIMIT_HOURS;
+};

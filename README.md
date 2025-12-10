@@ -39,7 +39,7 @@ This is not a to-do list. It is a **Performance Analytics Dashboard** for a CEO 
 ### 3. Data Sovereignty
 *   **Local First:** All data lives in your browser's `LocalStorage`. No login required.
 *   **CSV Export:** Download your raw data anytime.
-*   **Cloud Backup:** Optional integration with Google Sheets via Webhook. This is a one-way PUSH system to keep a permanent backup of your work.
+*   **Cloud Backup:** Optional Firebase integration for automatic cloud sync and multi-device access.
 *   **Backup & Restore:** Full JSON export/import capability to move data between devices.
 
 ## How to Use (The Protocol)
@@ -160,58 +160,6 @@ Firebase provides automatic cloud backup and cross-device sync for your sessions
 - Try signing out and signing in again
 
 **For more detailed setup and troubleshooting**, see [Firebase Sync Architecture Documentation](./docs/FIREBASE_SYNC_ARCHITECTURE.md).
-
-### Option 3: Google Sheets Sync (Legacy)
-To enable the "Back up to Google Sheets" feature:
-1.  Create a new Google Sheet.
-2.  Extensions -> Apps Script.
-3.  Paste the following code (replaces the default code):
-    ```javascript
-    function doPost(e) {
-      try {
-        var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-        var data = JSON.parse(e.postData.contents);
-        
-        // Handle Test Ping
-        if (data.id === "PING") {
-           sheet.appendRow(["PING", new Date().toISOString(), "Connection Verified", "", "", "", ""]);
-           return ContentService.createTextOutput(JSON.stringify({"status":"success", "message": "Pong"}));
-        }
-        
-        // Add header if empty
-        if (sheet.getLastRow() === 0) {
-          sheet.appendRow(["ID", "Date", "Duration", "Target", "Reps", "Notes", "Timestamp"]);
-        }
-        
-        sheet.appendRow([
-          data.id, 
-          data.date, 
-          data.durationSeconds, 
-          data.targetDurationSeconds, 
-          data.reps, 
-          data.notes, 
-          new Date(data.timestamp).toISOString()
-        ]);
-        
-        return ContentService.createTextOutput(JSON.stringify({"status":"success"}))
-          .setMimeType(ContentService.MimeType.JSON);
-      } catch(err) {
-        return ContentService.createTextOutput(JSON.stringify({"status":"error", "message": err.toString()}))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-
-    // Handles browser visits to the URL to prevent "Script function not found" errors
-    function doGet(e) {
-      return ContentService.createTextOutput("highBeta Cloud Node: Online");
-    }
-    ```
-4.  Click **Deploy** -> **New Deployment**.
-5.  Select **Type: Web App**.
-6.  Set "Who has access" to **Anyone** (Required so the client-side app can POST to it without OAuth).
-7.  Copy the **Web App URL**.
-8.  Paste this URL into the **Settings** menu of the highBeta app.
-9.  Click "Test Connection" to verify.
 
 ## Current Limitations
 

@@ -31,12 +31,6 @@ export const saveSession = (session: Session): void => {
   const updated = [session, ...sessions];
   localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
   
-  // Trigger Cloud Sync (Google Sheets - legacy)
-  const settings = getSettings();
-  if (settings.googleSheetsUrl) {
-    syncToGoogleSheets(session, settings.googleSheetsUrl);
-  }
-  
   // Trigger Firebase Cloud Sync if callback is set
   if (cloudSyncCallback) {
     cloudSyncCallback(session).catch(err => {
@@ -113,94 +107,6 @@ export const importDataJSON = (jsonString: string): boolean => {
     console.error("Import failed", e);
     return false;
   }
-};
-
-// --- CLOUD SYNC LOGIC ---
-
-/**
- * Type for Google Sheets sync payload
- * Can be a Session or a test ping payload
- */
-type GoogleSheetsPayload = Session | { id: string; notes: string };
-
-/**
- * Helper function to make a POST request to Google Sheets
- * @param url - Google Apps Script Web App URL
- * @param payload - Data to send (Session or test payload)
- */
-const postToGoogleSheets = async (url: string, payload: GoogleSheetsPayload): Promise<void> => {
-  await fetch(url, {
-    method: 'POST',
-    mode: 'no-cors', // Google Apps Script Web App requests usually require 'no-cors' mode
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload)
-  });
-};
-
-const getSyncQueue = (): SyncQueueItem[] => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
-    return data ? JSON.parse(data) : [];
-  } catch { return []; }
-};
-
-const saveSyncQueue = (queue: SyncQueueItem[]) => {
-  localStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(queue));
-};
-
-export const syncToGoogleSheets = async (session: Session, url: string) => {
-  try {
-    await postToGoogleSheets(url, session);
-    console.log("Sync request sent");
-  } catch (e) {
-    console.error("Sync failed, adding to queue", e);
-    const queue = getSyncQueue();
-    queue.push({
-      id: Math.random().toString(36).substr(2, 9),
-      session,
-      status: 'PENDING',
-      retryCount: 0
-    });
-    saveSyncQueue(queue);
-  }
-};
-
-export const testCloudConnection = async (url: string): Promise<boolean> => {
-  try {
-    // Send a dummy PING payload to verify connectivity
-    await postToGoogleSheets(url, { id: 'PING', notes: 'Connection Test' });
-    // Since 'no-cors' hides the status, we rely on lack of network error
-    // To truly verify, the user must check their sheet, but this confirms the request left the browser.
-    return true;
-  } catch (e) {
-    console.error("Connection test failed", e);
-    return false;
-  }
-};
-
-export const processSyncQueue = async () => {
-  const settings = getSettings();
-  if (!settings.googleSheetsUrl) return;
-
-  const queue = getSyncQueue();
-  if (queue.length === 0) return;
-
-  const newQueue: SyncQueueItem[] = [];
-
-  for (const item of queue) {
-    try {
-      await postToGoogleSheets(settings.googleSheetsUrl, item.session);
-      console.log(`Processed queue item ${item.id}`);
-    } catch (e) {
-      // Keep in queue if it fails again
-      item.retryCount++;
-      newQueue.push(item);
-    }
-  }
-  
-  saveSyncQueue(newQueue);
 };
 
 // --- FIREBASE CLOUD SYNC HELPERS ---

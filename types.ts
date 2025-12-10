@@ -21,7 +21,6 @@ export interface UserSettings {
   startDate: string; // When the protocol started
   name: string;
   substanceFreeStartDate: string;
-  googleSheetsUrl?: string; // Webhook URL for Google Apps Script
 }
 
 export interface DailyStats {
@@ -49,6 +48,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   dailyTimeGoalHours: 4,
   startDate: new Date().toISOString(),
   name: "highBeta User",
-  substanceFreeStartDate: new Date().toISOString(),
-  googleSheetsUrl: ""
+  substanceFreeStartDate: new Date().toISOString()
 };

@@ -5,6 +5,55 @@ All notable changes to the highBeta project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2024-12-10
+
+### Added - Sustainable Productivity & Protocol Simplification
+- **Daily Limit Warning (6-Hour Cap)**: New safety mechanism for sustainable performance
+  - Automatically displays an encouraging warning modal when daily session time exceeds 6 hours
+  - Message maintains the app's cool, analytical tone with a touch of humor
+  - Explains the rationale behind the 6-hour daily limit (marginal returns, cognitive load, sustainability)
+  - Non-blocking: users acknowledge and continue using the app
+  - Implemented in `DailyLimitWarning.tsx` component
+  - New utility functions: `getDailyTotalHours()` and `isDailyLimitExceeded()` in sessionUtils.ts
+- **Audio Features Planning**: Comprehensive analysis document for binaural beats and playlist support
+  - Created `AUDIO_FEATURES_ANALYSIS.md` in `/docs/planning`
+  - Evaluates pros/cons of audio integration
+  - Analyzes philosophical alignment with "low noise" protocol
+  - Provides multiple implementation options (binaural beats only, custom playlists, hybrid, documentation-only)
+  - Recommendation: Do not implement at this stage to preserve minimalism
+  - Includes discussion questions and decision framework
+
+### Removed - Legacy Features
+- **Google Sheets Integration**: Completely removed legacy sync feature
+  - Removed Google Sheets URL field from Settings view
+  - Removed `syncToGoogleSheets()`, `testCloudConnection()`, and `processSyncQueue()` functions from storage.ts
+  - Removed `googleSheetsUrl` from UserSettings interface and DEFAULT_SETTINGS
+  - Removed sync queue management and related types
+  - Cleaned up documentation in README.md (removed "Option 3: Google Sheets Sync" section)
+  - Firebase Cloud Sync remains as the primary cloud backup solution
+  - Simplifies codebase and reduces maintenance burden
+
+### Changed
+- **README.md**: Updated Data Sovereignty section to reference Firebase instead of Google Sheets
+- **Settings UI**: Streamlined settings panel with removal of cloud backup configuration
+
+### Technical
+- Reduced code complexity by removing ~90 lines of Google Sheets sync logic
+- Cleaner separation between local storage and Firebase sync
+- Improved type safety with removal of optional googleSheetsUrl field
+
+### Documentation
+- Added comprehensive audio features analysis document
+- Updated README to reflect current backup options
+- Documented 6-hour daily limit rationale
+
+### Next Steps
+- Monitor user feedback on 6-hour daily limit
+- Gather user requests for audio features before implementation
+- Continue focus on core productivity metrics (Time Budget, SER, Consistency)
+
+---
+
 ## [3.1.0] - 2024-12-09
 
 ### Added - Gaming Prevention & Protocol Integrity
