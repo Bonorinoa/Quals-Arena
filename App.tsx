@@ -5,11 +5,13 @@ import { DashboardView } from './components/DashboardView';
 import { SettingsView } from './components/SettingsView';
 import { WelcomeView } from './components/WelcomeView';
 import { AuthModal } from './components/AuthModal';
+import { DailyLimitWarning } from './components/DailyLimitWarning';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
 import { STORAGE_KEYS } from './services/storage';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncError, getUserFriendlyErrorMessage } from './services/firebaseSync';
+import { isDailyLimitExceeded, getDailyTotalHours } from './utils/sessionUtils';
 
 // Detailed sync status type
 type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
@@ -23,6 +25,8 @@ function AppContent() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDailyLimitWarning, setShowDailyLimitWarning] = useState(false);
+  const [dailyTotalHours, setDailyTotalHours] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +160,16 @@ function AppContent() {
   const handleSessionComplete = (session: Session) => {
     storage.saveSession(session);
     setSessions(storage.getSessions()); // Refresh
+    
+    // Check if daily limit has been exceeded after this session
+    const todayDate = storage.getLocalDate();
+    const updatedSessions = storage.getSessions();
+    if (isDailyLimitExceeded(updatedSessions, todayDate)) {
+      const totalHours = getDailyTotalHours(updatedSessions, todayDate);
+      setDailyTotalHours(totalHours);
+      setShowDailyLimitWarning(true);
+    }
+    
     setView(ViewMode.DASHBOARD);
   };
 
@@ -386,6 +400,14 @@ function AppContent() {
       {/* Auth Modal */}
       {showAuthModal && (
         <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
+
+      {/* Daily Limit Warning */}
+      {showDailyLimitWarning && (
+        <DailyLimitWarning 
+          totalHours={dailyTotalHours}
+          onClose={() => setShowDailyLimitWarning(false)} 
+        />
       )}
 
       {/* Footer / Data Controls */}
