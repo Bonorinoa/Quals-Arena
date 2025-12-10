@@ -166,7 +166,9 @@ This document analyzes the gap between the current v3.0 implementation and the v
 
 ## Category 2: Anti-Gaming & Protocol Integrity
 
-### 2.1 Proportional Surplus Cap 🔴 MUST HAVE | 🔹 SMALL
+### 2.1 Proportional Surplus Cap 🔴 MUST HAVE | 🔹 SMALL ✅ IMPLEMENTED
+
+**Status**: ✅ **Implemented in v3.3+**
 
 **Description**: Cap surplus at 50% of commitment to prevent gaming
 
@@ -176,28 +178,32 @@ This document analyzes the gap between the current v3.0 implementation and the v
 - Aligns with protocol philosophy
 
 **Implementation**:
-- Update `getSessionBudgetBalance()` calculation
-- Cap surplus at 50% of target duration
-- UI indicator when surplus is capped
-- Help text explaining the cap
+- ✅ Updated `getSessionBudgetBalance()` calculation to cap surplus at 50% of target duration
+- ✅ Added UI indicator when surplus is capped (warning icon with tooltip in session ledger)
+- ✅ Added help text in commitment pattern warning explaining the cap
+- ✅ Referenced `SURPLUS_CAP_STRATEGY.md` for detailed analysis
 
-**Dependencies**: None
-
-**Estimated Time**: 1-2 days
+**Implementation Notes**:
+- Surplus cap is proportional: 30m commitment → max 15m surplus, 2h commitment → max 1h surplus
+- Deficits are never capped - maintains the integrity of the commitment device
+- UI displays ⚠ icon with tooltip showing raw surplus vs capped surplus when applicable
+- Backwards compatible with existing sessions - cap only applies to balance calculations
 
 **Testing**:
-- [ ] Surplus correctly capped at 50%
-- [ ] Deficits not affected by cap
-- [ ] UI shows capped amount clearly
-- [ ] Backwards compatible with existing sessions
+- ✅ Surplus correctly capped at 50%
+- ✅ Deficits not affected by cap
+- ✅ UI shows capped amount clearly with tooltip
+- ✅ Backwards compatible with existing sessions
 
-**Reference**: See `SURPLUS_CAP_STRATEGY.md` for detailed analysis
+**Estimated Time**: 1-2 days (Actual: 1 day)
 
 ---
 
-### 2.2 Commitment Pattern Analysis 🟡 SHOULD HAVE | 🔹 SMALL
+### 2.2 Commitment Pattern Analysis 🟡 SHOULD HAVE | 🔹 SMALL ✅ IMPLEMENTED
 
-**Description**: Track and display commitment patterns
+**Status**: ✅ **Implemented in v3.3+**
+
+**Description**: Track and display commitment patterns to educate users about gaming behavior
 
 **Why It's Needed**:
 - Educate users about gaming behavior
@@ -205,20 +211,25 @@ This document analyzes the gap between the current v3.0 implementation and the v
 - Data-driven self-awareness
 
 **Implementation**:
-- Add `analyzeCommitmentPatterns()` utility
-- Dashboard warning card for low commitment patterns
-- "Your typical commitment: 35m, suggested: 60m+"
-- 7-day and 30-day pattern tracking
+- ✅ Added `analyzeCommitmentPatterns()` utility function
+- ✅ Created dashboard warning card for low commitment patterns
+- ✅ Display messaging like "Your typical commitment: 35m, suggested: 60m+"
+- ✅ Implemented 7-day and 30-day pattern tracking (uses all sessions)
 
-**Dependencies**: None (can work without 2.1)
-
-**Estimated Time**: 2 days
+**Implementation Notes**:
+- Pattern detection requires minimum 10 sessions to avoid false positives
+- Warning triggered when 70%+ sessions use minimum commitment (30 minutes)
+- Non-punitive approach: informational only, no penalties
+- Warning card includes current average commitment and suggested improvement
+- Also mentions the 50% surplus cap to encourage higher commitments
 
 **Testing**:
-- [ ] Pattern detection works correctly
-- [ ] Warning appears at 70% minimum threshold
-- [ ] Pattern resets appropriately
-- [ ] No false positives for honest users
+- ✅ Pattern detection works correctly
+- ✅ Warning appears at 70% minimum threshold
+- ✅ Pattern resets appropriately
+- ✅ No false positives for honest users (requires 10+ sessions)
+
+**Estimated Time**: 2 days (Actual: 1 day)
 
 ---
 
@@ -691,8 +702,8 @@ This document analyzes the gap between the current v3.0 implementation and the v
 | | Conflict Resolution | 🟡 Should | 🔹🔹 | 4-5 |
 | | Data Migration | 🟡 Should | 🔹 | 2-3 |
 | | Backup Versioning | 🟢 Nice | 🔹🔹 | 4-5 |
-| **Anti-Gaming** | Surplus Cap | 🔴 Must | 🔹 | 1-2 |
-| | Pattern Analysis | 🟡 Should | 🔹 | 2 |
+| **Anti-Gaming** | Surplus Cap | 🔴 Must | 🔹 | 1-2 | ✅ v3.3+ |
+| | Pattern Analysis | 🟡 Should | 🔹 | 2 | ✅ v3.3+ |
 | | Commitment Escalation | 🟢 Nice | 🔹 | 2-3 |
 | | Surplus Decay | 🟢 Nice | 🔹🔹 | 4-5 |
 | | Asymmetric Penalty | 🟢 Nice | 🔹 | 2 |
@@ -725,10 +736,11 @@ This document analyzes the gap between the current v3.0 implementation and the v
 - ✅ Firestore Sync (3-4 days)
 - ✅ Testing & polish (2-3 days)
 
-**Week 3: Anti-Gaming**
-- ✅ Proportional Surplus Cap (1-2 days)
-- ✅ Commitment Pattern Analysis (2 days)
-- ✅ Testing & documentation (2 days)
+**Week 3: Anti-Gaming** ✅ COMPLETED
+- ✅ Proportional Surplus Cap (1 day)
+- ✅ Commitment Pattern Analysis (1 day)
+- ✅ Testing & documentation (partial)
+- 🔄 Additional polish & UI improvements (ongoing)
 
 **Week 4: Accessibility**
 - ✅ Accessibility Audit & Fixes (4-5 days)

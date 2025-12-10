@@ -16,7 +16,7 @@ import {
 import { getLocalDate } from '../services/storage';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
-import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance, analyzeCommitmentPatterns } from '../utils/sessionUtils';
+import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance, analyzeCommitmentPatterns, getSessionBudgetBalance, MAX_SURPLUS_RATIO } from '../utils/sessionUtils';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -592,14 +592,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                    </thead>
                    <tbody className="font-mono text-xs">
                      {sessions.slice(0, 10).map((s) => {
-                       const net = s.durationSeconds - (s.targetDurationSeconds || s.durationSeconds);
+                       const actualBalance = getSessionBudgetBalance(s);
+                       const rawBalance = s.durationSeconds - (s.targetDurationSeconds || s.durationSeconds);
+                       const isCapped = s.targetDurationSeconds && rawBalance > 0 && actualBalance !== rawBalance;
+                       const maxSurplus = s.targetDurationSeconds ? s.targetDurationSeconds * MAX_SURPLUS_RATIO : 0;
+                       
                        return (
-                         <tr key={s.id} className="border-b border-zinc-900 hover:bg-zinc-900/50">
+                         <tr key={s.id} className="border-b border-zinc-900 hover:bg-zinc-900/50 group">
                            <td className="py-3 pr-4 text-zinc-400">{s.date}</td>
                            <td className="py-3 pr-4 text-white">{(s.durationSeconds / 60).toFixed(0)}m</td>
                            <td className="py-3 pr-4 text-zinc-500">{(s.targetDurationSeconds || 0) / 60}m</td>
-                           <td className={`py-3 pr-4 text-right ${net < 0 ? 'text-red-500' : (net > 0 ? 'text-emerald-500' : 'text-zinc-600')}`}>
-                             {net > 0 ? '+' : ''}{(net / 60).toFixed(0)}m
+                           <td className={`py-3 pr-4 text-right ${actualBalance < 0 ? 'text-red-500' : (actualBalance > 0 ? 'text-emerald-500' : 'text-zinc-600')}`}>
+                             <div className="flex items-center justify-end gap-1">
+                               <span>{actualBalance > 0 ? '+' : ''}{(actualBalance / 60).toFixed(0)}m</span>
+                               {isCapped && (
+                                 <span 
+                                   className="text-[9px] text-amber-500 cursor-help" 
+                                   title={`Surplus capped at ${Math.round(MAX_SURPLUS_RATIO * 100)}% of commitment. Raw surplus: +${(rawBalance / 60).toFixed(0)}m, Max allowed: +${(maxSurplus / 60).toFixed(0)}m`}
+                                 >
+                                   ⚠
+                                 </span>
+                               )}
+                             </div>
                            </td>
                            <td className="py-3 px-4 text-right text-white">{s.reps}</td>
                          </tr>
