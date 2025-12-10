@@ -128,7 +128,7 @@ async function withRetry<T>(
         RETRY_CONFIG.maxDelay
       );
       
-      console.log(`${operationName} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms...`, error);
+      console.error(`${operationName} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms...`, error);
       
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay));
