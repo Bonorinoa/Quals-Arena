@@ -8,6 +8,9 @@ import {
   getDailyBudgetBalance,
   getWeeklyBudgetBalance,
   analyzeCommitmentPatterns,
+  getDailyTotalHours,
+  isDailyLimitExceeded,
+  DAILY_LIMIT_HOURS,
   MIN_DURATION_THRESHOLD_SECONDS,
   MAX_SURPLUS_RATIO,
   MIN_COMMITMENT_SECONDS,
@@ -462,6 +465,92 @@ describe('sessionUtils', () => {
       const result = analyzeCommitmentPatterns(sessions);
       expect(result.minimumCommitmentRatio).toBe(0.3); // 3/10 = 30%
       expect(result.hasLowCommitmentPattern).toBe(false); // Below 70% threshold
+    });
+  });
+
+  describe('getDailyTotalHours', () => {
+    it('should return 0 for date with no sessions', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 3600, reps: 5, notes: '', date: '2024-01-01' },
+      ];
+      expect(getDailyTotalHours(sessions, '2024-01-02')).toBe(0);
+    });
+
+    it('should calculate total hours for a single session', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 7200, reps: 5, notes: '', date: '2024-01-01' }, // 2 hours
+      ];
+      expect(getDailyTotalHours(sessions, '2024-01-01')).toBe(2);
+    });
+
+    it('should calculate total hours for multiple sessions on same day', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 7200, reps: 5, notes: '', date: '2024-01-01' }, // 2 hours
+        { id: '2', timestamp: 0, durationSeconds: 5400, reps: 3, notes: '', date: '2024-01-01' }, // 1.5 hours
+        { id: '3', timestamp: 0, durationSeconds: 3600, reps: 2, notes: '', date: '2024-01-01' }, // 1 hour
+      ];
+      expect(getDailyTotalHours(sessions, '2024-01-01')).toBe(4.5);
+    });
+
+    it('should only count sessions from the specified date', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 7200, reps: 5, notes: '', date: '2024-01-01' },
+        { id: '2', timestamp: 0, durationSeconds: 3600, reps: 3, notes: '', date: '2024-01-02' },
+        { id: '3', timestamp: 0, durationSeconds: 5400, reps: 2, notes: '', date: '2024-01-01' },
+      ];
+      expect(getDailyTotalHours(sessions, '2024-01-01')).toBe(3.5); // 7200 + 5400 = 12600 seconds = 3.5 hours
+    });
+  });
+
+  describe('isDailyLimitExceeded', () => {
+    it('should return false when no sessions exist', () => {
+      expect(isDailyLimitExceeded([], '2024-01-01')).toBe(false);
+    });
+
+    it('should return false when total is exactly at the limit', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: DAILY_LIMIT_HOURS * 3600, reps: 5, notes: '', date: '2024-01-01' },
+      ];
+      expect(isDailyLimitExceeded(sessions, '2024-01-01')).toBe(false);
+    });
+
+    it('should return true when total exceeds the 6-hour limit', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 7200, reps: 5, notes: '', date: '2024-01-01' }, // 2 hours
+        { id: '2', timestamp: 0, durationSeconds: 7200, reps: 3, notes: '', date: '2024-01-01' }, // 2 hours
+        { id: '3', timestamp: 0, durationSeconds: 7200, reps: 2, notes: '', date: '2024-01-01' }, // 2 hours
+        { id: '4', timestamp: 0, durationSeconds: 1800, reps: 1, notes: '', date: '2024-01-01' }, // 0.5 hours
+      ];
+      // Total: 6.5 hours
+      expect(isDailyLimitExceeded(sessions, '2024-01-01')).toBe(true);
+    });
+
+    it('should return false when total is below the limit', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 7200, reps: 5, notes: '', date: '2024-01-01' }, // 2 hours
+        { id: '2', timestamp: 0, durationSeconds: 5400, reps: 3, notes: '', date: '2024-01-01' }, // 1.5 hours
+      ];
+      // Total: 3.5 hours
+      expect(isDailyLimitExceeded(sessions, '2024-01-01')).toBe(false);
+    });
+
+    it('should only check sessions from the specified date', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 10800, reps: 5, notes: '', date: '2024-01-01' }, // 3 hours on day 1
+        { id: '2', timestamp: 0, durationSeconds: 10800, reps: 3, notes: '', date: '2024-01-02' }, // 3 hours on day 2
+        { id: '3', timestamp: 0, durationSeconds: 10800, reps: 2, notes: '', date: '2024-01-01' }, // 3 hours on day 1
+      ];
+      // Day 1: 6 hours (at limit, not exceeded)
+      expect(isDailyLimitExceeded(sessions, '2024-01-01')).toBe(false);
+      // Day 2: 3 hours (below limit)
+      expect(isDailyLimitExceeded(sessions, '2024-01-02')).toBe(false);
+    });
+
+    it('should handle edge case: slightly over 6 hours', () => {
+      const sessions: Session[] = [
+        { id: '1', timestamp: 0, durationSeconds: 21601, reps: 5, notes: '', date: '2024-01-01' }, // 6 hours + 1 second
+      ];
+      expect(isDailyLimitExceeded(sessions, '2024-01-01')).toBe(true);
     });
   });
 });
