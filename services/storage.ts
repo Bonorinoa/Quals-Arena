@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
   SYNC_QUEUE: 'highbeta_sync_queue'
 };
 
+export { STORAGE_KEYS };
+
 export const CURRENT_VERSION = '1.3';
 
 // Re-export for backward compatibility
@@ -29,10 +31,17 @@ export const saveSession = (session: Session): void => {
   const updated = [session, ...sessions];
   localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
   
-  // Trigger Cloud Sync
+  // Trigger Cloud Sync (Google Sheets - legacy)
   const settings = getSettings();
   if (settings.googleSheetsUrl) {
     syncToGoogleSheets(session, settings.googleSheetsUrl);
+  }
+  
+  // Trigger Firebase Cloud Sync if callback is set
+  if (cloudSyncCallback) {
+    cloudSyncCallback(session).catch(err => {
+      console.error('Firebase sync failed:', err);
+    });
   }
 };
 
@@ -47,6 +56,13 @@ export const getSettings = (): UserSettings => {
 
 export const saveSettings = (settings: UserSettings): void => {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  
+  // Trigger Firebase Cloud Sync if callback is set
+  if (cloudSettingsSyncCallback) {
+    cloudSettingsSyncCallback(settings).catch(err => {
+      console.error('Firebase settings sync failed:', err);
+    });
+  }
 };
 
 export const clearData = (): void => {
@@ -185,4 +201,31 @@ export const processSyncQueue = async () => {
   }
   
   saveSyncQueue(newQueue);
+};
+
+// --- FIREBASE CLOUD SYNC HELPERS ---
+// These are optional hooks for Firebase sync, keeping localStorage as primary storage
+
+/**
+ * Optional callback for syncing a session to Firebase after saving to localStorage
+ * This should be set by App.tsx when a user is authenticated
+ * 
+ * Note: Using module-level mutable variables here is intentional to keep the storage
+ * service decoupled from Firebase. This allows the storage service to remain simple
+ * and backward-compatible while enabling optional cloud sync without dependencies.
+ */
+export let cloudSyncCallback: ((session: Session) => Promise<void>) | null = null;
+
+export const setCloudSyncCallback = (callback: ((session: Session) => Promise<void>) | null) => {
+  cloudSyncCallback = callback;
+};
+
+/**
+ * Optional callback for syncing settings to Firebase after saving to localStorage
+ * This should be set by App.tsx when a user is authenticated
+ */
+export let cloudSettingsSyncCallback: ((settings: UserSettings) => Promise<void>) | null = null;
+
+export const setCloudSettingsSyncCallback = (callback: ((settings: UserSettings) => Promise<void>) | null) => {
+  cloudSettingsSyncCallback = callback;
 };
