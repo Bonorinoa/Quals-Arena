@@ -608,7 +608,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                                {isCapped && (
                                  <span 
                                    className="text-[9px] text-amber-500 cursor-help" 
-                                   title={`Surplus capped at 50% of commitment. Raw surplus: +${(rawBalance / 60).toFixed(0)}m, Max allowed: +${(maxSurplus / 60).toFixed(0)}m`}
+                                   title={`Surplus capped at ${Math.round(MAX_SURPLUS_RATIO * 100)}% of commitment. Raw surplus: +${(rawBalance / 60).toFixed(0)}m, Max allowed: +${(maxSurplus / 60).toFixed(0)}m`}
                                  >
                                    ⚠
                                  </span>
