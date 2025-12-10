@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson, HelpCircle, User, Cloud, CloudOff, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Timer, LayoutDashboard, Download, Settings, Trash2, Upload, FileJson, HelpCircle, User, Cloud, CloudOff, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { TimerView } from './components/TimerView';
 import { DashboardView } from './components/DashboardView';
 import { SettingsView } from './components/SettingsView';
@@ -10,7 +9,10 @@ import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
 import { STORAGE_KEYS } from './services/storage';
 import { AuthProvider, useAuth } from './services/AuthContext';
-import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud } from './services/firebaseSync';
+import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncError, getUserFriendlyErrorMessage } from './services/firebaseSync';
+
+// Detailed sync status type
+type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
 
 function AppContent() {
   const { user, loading: authLoading } = useAuth();
@@ -21,7 +23,8 @@ function AppContent() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [syncError, setSyncError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -48,11 +51,47 @@ function AppContent() {
     if (user) {
       // Set up cloud sync callbacks
       storage.setCloudSyncCallback(async (session: Session) => {
-        await syncSingleSessionToCloud(user.uid, session);
+        setSyncStatus('syncing-session');
+        try {
+          await syncSingleSessionToCloud(user.uid, session);
+          setSyncStatus('synced');
+          setSyncError(null);
+          
+          // Clear synced status after 3 seconds
+          if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+          syncTimeoutRef.current = setTimeout(() => {
+            setSyncStatus('idle');
+          }, 3000);
+        } catch (error: any) {
+          console.error('Session sync failed:', error);
+          const errorMessage = error instanceof SyncError ? error.message : 'Failed to sync session';
+          setSyncError(errorMessage);
+          setSyncStatus('error');
+          
+          // Don't clear error automatically - let user dismiss or retry
+        }
       });
       
       storage.setCloudSettingsSyncCallback(async (settings: UserSettings) => {
-        await syncSettingsToCloud(user.uid, settings);
+        setSyncStatus('syncing-settings');
+        try {
+          await syncSettingsToCloud(user.uid, settings);
+          setSyncStatus('synced');
+          setSyncError(null);
+          
+          // Clear synced status after 3 seconds
+          if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+          syncTimeoutRef.current = setTimeout(() => {
+            setSyncStatus('idle');
+          }, 3000);
+        } catch (error: any) {
+          console.error('Settings sync failed:', error);
+          const errorMessage = error instanceof SyncError ? error.message : 'Failed to sync settings';
+          setSyncError(errorMessage);
+          setSyncStatus('error');
+          
+          // Don't clear error automatically - let user dismiss or retry
+        }
       });
       
       // Perform initial sync when user signs in
@@ -62,13 +101,15 @@ function AppContent() {
       storage.setCloudSyncCallback(null);
       storage.setCloudSettingsSyncCallback(null);
       setSyncStatus('idle');
+      setSyncError(null);
     }
   }, [user]);
 
   const performInitialSync = async () => {
     if (!user) return;
     
-    setSyncStatus('syncing');
+    setSyncStatus('syncing-initial');
+    setSyncError(null);
     try {
       const { sessions: mergedSessions, settings: mergedSettings } = 
         await performFullSync(user.uid, sessions, settings);
@@ -82,22 +123,29 @@ function AppContent() {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(mergedSettings));
       
       setSyncStatus('synced');
+      setSyncError(null);
       
       // Clear synced status after 3 seconds
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
       syncTimeoutRef.current = setTimeout(() => {
         setSyncStatus('idle');
       }, 3000);
-    } catch (error) {
-      console.error('Sync failed:', error);
+    } catch (error: any) {
+      console.error('Initial sync failed:', error);
+      const errorMessage = error instanceof SyncError ? error.message : 'Failed to sync with cloud';
+      setSyncError(errorMessage);
       setSyncStatus('error');
-      
-      // Clear error status after 5 seconds
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      syncTimeoutRef.current = setTimeout(() => {
-        setSyncStatus('idle');
-      }, 5000);
     }
+  };
+
+  const handleRetrySync = () => {
+    if (!user) return;
+    performInitialSync();
+  };
+
+  const handleDismissError = () => {
+    setSyncError(null);
+    setSyncStatus('idle');
   };
 
   const handleCloseWelcome = () => {
@@ -205,10 +253,14 @@ function AppContent() {
           {/* Sync Status Indicator */}
           {user && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
-              {syncStatus === 'syncing' && (
+              {(syncStatus === 'syncing-initial' || syncStatus === 'syncing-session' || syncStatus === 'syncing-settings') && (
                 <>
                   <Cloud className="text-blue-400 animate-pulse" size={14} />
-                  <span className="text-xs text-zinc-400">Syncing...</span>
+                  <span className="text-xs text-zinc-400">
+                    {syncStatus === 'syncing-initial' && 'Syncing...'}
+                    {syncStatus === 'syncing-session' && 'Syncing session...'}
+                    {syncStatus === 'syncing-settings' && 'Syncing settings...'}
+                  </span>
                 </>
               )}
               {syncStatus === 'synced' && (
@@ -221,6 +273,12 @@ function AppContent() {
                 <>
                   <AlertCircle className="text-red-400" size={14} />
                   <span className="text-xs text-zinc-400">Sync Error</span>
+                </>
+              )}
+              {syncStatus === 'offline' && (
+                <>
+                  <CloudOff className="text-orange-400" size={14} />
+                  <span className="text-xs text-zinc-400">Offline</span>
                 </>
               )}
               {syncStatus === 'idle' && (
@@ -262,6 +320,35 @@ function AppContent() {
           </button>
         </div>
       </nav>
+
+      {/* Sync Error Banner */}
+      {syncError && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4 animate-slide-down">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 shadow-xl backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-red-400 mb-3">{syncError}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRetrySync}
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 rounded-lg text-xs font-medium transition-all flex items-center gap-2"
+                  >
+                    <RefreshCw size={12} />
+                    Retry Sync
+                  </button>
+                  <button
+                    onClick={handleDismissError}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 rounded-lg text-xs font-medium transition-all"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="pt-24 px-4 sm:px-6 max-w-6xl mx-auto">

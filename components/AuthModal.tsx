@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { User, LogIn, LogOut, AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../services/AuthContext';
+import { User, LogIn, LogOut, AlertCircle, Loader2, X } from 'lucide-react';
+import { useAuth, AuthErrorType } from '../services/AuthContext';
 
 interface AuthModalProps {
   onClose: () => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
-  const { user, signIn, signOut, error } = useAuth();
+  const { user, signIn, signOut, error, errorType } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -19,7 +19,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       onClose();
     } catch (err: any) {
       console.error('Sign in failed:', err);
-      setLocalError(err.message || 'Failed to sign in. Please try again.');
+      // Don't set local error - the AuthContext will handle it
+      // Only set local error for popup-closed to not be too intrusive
+      if (errorType === AuthErrorType.POPUP_CLOSED) {
+        setLocalError(null);
+      } else {
+        setLocalError(err.message || 'Failed to sign in. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +46,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   };
 
   const errorMessage = localError || error;
+  const showError = errorMessage && errorType !== AuthErrorType.POPUP_CLOSED;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -55,10 +62,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         </div>
 
         {/* Error Message */}
-        {errorMessage && (
+        {showError && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
             <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={18} />
-            <p className="text-sm text-red-400">{errorMessage}</p>
+            <p className="text-sm text-red-400 flex-1">{errorMessage}</p>
           </div>
         )}
 
