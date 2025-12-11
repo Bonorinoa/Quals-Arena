@@ -13,6 +13,9 @@ export interface Session {
   notes: string; // "Diagnostic Note" or log
   mentalNotes?: MentalNote[]; // The Stream of Consciousness
   date: string; // ISO Date string YYYY-MM-DD
+  lastModified?: number; // Timestamp of last edit
+  editCount?: number; // Number of times edited
+  deleted?: boolean; // Soft delete flag
 }
 
 export interface UserSettings {

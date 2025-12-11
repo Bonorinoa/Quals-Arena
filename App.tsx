@@ -6,12 +6,16 @@ import { SettingsView } from './components/SettingsView';
 import { WelcomeView } from './components/WelcomeView';
 import { AuthModal } from './components/AuthModal';
 import { DailyLimitWarning } from './components/DailyLimitWarning';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
 import { STORAGE_KEYS } from './services/storage';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncError, getUserFriendlyErrorMessage } from './services/firebaseSync';
 import { isDailyLimitExceeded, getDailyTotalHours } from './utils/sessionUtils';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from './utils/keyboardShortcuts';
+import { getVisibleSessions } from './services/storage';
 
 // Detailed sync status type
 type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
@@ -29,8 +33,12 @@ function AppContent() {
   const [dailyTotalHours, setDailyTotalHours] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if any modal is open
+  const isModalOpen = showSettingsModal || showWelcome || showAuthModal || showDailyLimitWarning || showKeyboardShortcuts;
 
   // Initialize data
   useEffect(() => {
@@ -40,7 +48,7 @@ function AppContent() {
       // In production you might want migration logic, but for now we reset to ensure clean state
       // storage.clearData(); 
     }
-    setSessions(storage.getSessions());
+    setSessions(getVisibleSessions());
     setSettings(storage.getSettings());
     
     // Show welcome page on first visit
@@ -49,6 +57,11 @@ function AppContent() {
       setShowWelcome(true);
     }
   }, []);
+
+  // Refresh sessions handler for edit/delete
+  const handleSessionsChange = () => {
+    setSessions(getVisibleSessions());
+  };
 
   // Setup cloud sync callbacks when user is authenticated
   useEffect(() => {
@@ -157,13 +170,32 @@ function AppContent() {
     localStorage.setItem('highbeta_has_seen_welcome', 'true');
   };
 
+  const handleCloseModal = () => {
+    if (showKeyboardShortcuts) setShowKeyboardShortcuts(false);
+    else if (showSettingsModal) setShowSettingsModal(false);
+    else if (showWelcome) handleCloseWelcome();
+    else if (showAuthModal) setShowAuthModal(false);
+    else if (showDailyLimitWarning) setShowDailyLimitWarning(false);
+  };
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onShowHelp: () => setShowKeyboardShortcuts(true),
+    onEnterArena: () => view !== ViewMode.FOCUS && setView(ViewMode.FOCUS),
+    onShowDashboard: () => view !== ViewMode.DASHBOARD && setView(ViewMode.DASHBOARD),
+    onShowSettings: () => setShowSettingsModal(true),
+    onCloseModal: handleCloseModal,
+    currentView: view,
+    isModalOpen,
+  });
+
   const handleSessionComplete = (session: Session) => {
     storage.saveSession(session);
-    setSessions(storage.getSessions()); // Refresh
+    setSessions(getVisibleSessions()); // Refresh
     
     // Check if daily limit has been exceeded after this session
     const todayDate = storage.getLocalDate();
-    const updatedSessions = storage.getSessions();
+    const updatedSessions = getVisibleSessions();
     if (isDailyLimitExceeded(updatedSessions, todayDate)) {
       const totalHours = getDailyTotalHours(updatedSessions, todayDate);
       setDailyTotalHours(totalHours);
@@ -248,7 +280,7 @@ function AppContent() {
       storage.clearData();
       setSessions([]);
       // Reload from storage just to be safe
-      setSessions(storage.getSessions());
+      setSessions(getVisibleSessions());
     }
   };
 
@@ -372,6 +404,7 @@ function AppContent() {
             settings={settings} 
             onStartSession={handleStartSession}
             onRelapse={handleRelapse}
+            onSessionsChange={handleSessionsChange}
           />
         )}
         
@@ -409,6 +442,17 @@ function AppContent() {
           onClose={() => setShowDailyLimitWarning(false)} 
         />
       )}
+
+      {/* Keyboard Shortcuts Help */}
+      {showKeyboardShortcuts && (
+        <KeyboardShortcutsHelp onClose={() => setShowKeyboardShortcuts(false)} />
+      )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
+
+      {/* Offline Indicator */}
+      <OfflineIndicator />
 
       {/* Footer / Data Controls */}
       <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">

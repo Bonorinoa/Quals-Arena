@@ -255,29 +255,33 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   };
 
   // ----------------------------------------------------------------------
-  // VIEW: STEP 1 - DURATION
+  // VIEW: STEP 1 - DURATION - Enhanced with glass morphism
   // ----------------------------------------------------------------------
   if (mode === 'SETUP_DURATION') {
     return (
-       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-in slide-in-from-bottom-8 fade-in duration-700">
-         <h2 className="text-zinc-500 font-mono text-xs uppercase tracking-[0.2em] mb-12 flex items-center gap-2">
-            <Target size={14} /> Phase 1: Commitment
-         </h2>
+       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-fade-in">
+         <div className="glass-subtle px-6 py-3 rounded-full border-zinc-800 mb-12 flex items-center gap-2 backdrop-blur-sm animate-scale-in">
+           <Target size={14} className="text-zinc-500" />
+           <h2 className="text-zinc-500 font-mono text-xs uppercase tracking-[0.2em]">
+              Phase 1: Commitment
+           </h2>
+         </div>
          
          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full">
-            {DURATIONS.map((opt) => (
+            {DURATIONS.map((opt, idx) => (
               <button
                 key={opt.label}
                 onClick={() => handleSelectDuration(opt.value)}
-                className="group relative overflow-hidden bg-zinc-900/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/50 p-8 rounded-xl transition-all duration-300 hover:bg-zinc-800/60 active:scale-95"
+                className="group relative overflow-hidden glass border-white/5 hover:border-emerald-500/50 p-8 rounded-xl transition-all duration-300 hover:bg-emerald-500/5 active:scale-95 shadow-glass hover:shadow-glass-lg animate-scale-in"
+                style={{ animationDelay: `${idx * 50}ms` }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all" />
-                <span className="text-2xl font-mono text-zinc-300 group-hover:text-white font-bold">{opt.label}</span>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/10 group-hover:to-transparent transition-all" />
+                <span className="relative text-2xl font-mono text-zinc-300 group-hover:text-white font-bold transition-colors">{opt.label}</span>
               </button>
             ))}
          </div>
 
-         <button onClick={onCancel} className="mt-16 text-zinc-600 hover:text-zinc-400 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-colors">
+         <button onClick={onCancel} className="mt-16 glass-subtle px-6 py-3 rounded-full border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-all backdrop-blur-sm">
             <ArrowLeft size={14} /> Abort Protocol
          </button>
        </div>
@@ -285,38 +289,42 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: STEP 2 - WARMUP SELECTION
+  // VIEW: STEP 2 - WARMUP SELECTION - Enhanced with glass morphism
   // ----------------------------------------------------------------------
   if (mode === 'SETUP_WARMUP') {
     return (
-       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-in slide-in-from-bottom-8 fade-in duration-700">
-         <h2 className="text-cyan-500/70 font-mono text-xs uppercase tracking-[0.2em] mb-12 flex items-center gap-2">
-            <Thermometer size={14} /> Phase 2: Calibration
-         </h2>
+       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-2xl mx-auto p-4 animate-fade-in">
+         <div className="glass-subtle px-6 py-3 rounded-full border-cyan-500/20 mb-12 flex items-center gap-2 backdrop-blur-sm animate-scale-in">
+           <Thermometer size={14} className="text-cyan-500/70" />
+           <h2 className="text-cyan-500/70 font-mono text-xs uppercase tracking-[0.2em]">
+              Phase 2: Calibration
+           </h2>
+         </div>
          
-         <p className="text-zinc-400 text-center max-w-md mb-12 font-light text-lg">
+         <p className="text-zinc-400 text-center max-w-md mb-12 font-light text-lg animate-fade-in" style={{ animationDelay: '100ms' }}>
            Do you need to clear cognitive noise before the clock starts?
          </p>
 
          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-            {WARMUPS.map((opt) => (
+            {WARMUPS.map((opt, idx) => (
               <button
                 key={opt.label}
                 onClick={() => handleSelectWarmup(opt.value)}
-                className={`group relative overflow-hidden backdrop-blur-md border p-6 rounded-xl transition-all duration-300 active:scale-95 ${
+                className={`group relative overflow-hidden glass border p-6 rounded-xl transition-all duration-300 active:scale-95 shadow-glass hover:shadow-glass-lg animate-scale-in ${
                   opt.value === 0 
-                  ? 'bg-zinc-900/40 border-white/5 hover:border-zinc-500' 
-                  : 'bg-cyan-950/10 border-cyan-500/10 hover:border-cyan-400/50 hover:bg-cyan-900/20'
+                  ? 'border-white/5 hover:border-zinc-500 hover:bg-white/5' 
+                  : 'border-cyan-500/20 hover:border-cyan-400/50 hover:bg-cyan-500/10'
                 }`}
+                style={{ animationDelay: `${idx * 50}ms` }}
               >
-                <span className={`text-xl font-mono font-bold ${opt.value === 0 ? 'text-zinc-400' : 'text-cyan-200'}`}>
+                <span className={`text-xl font-mono font-bold transition-colors ${opt.value === 0 ? 'text-zinc-400 group-hover:text-zinc-300' : 'text-cyan-200 group-hover:text-cyan-100'}`}>
                   {opt.label}
                 </span>
               </button>
             ))}
          </div>
 
-         <button onClick={() => setMode('SETUP_DURATION')} className="mt-16 text-zinc-600 hover:text-zinc-400 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-colors">
+         <button onClick={() => setMode('SETUP_DURATION')} className="mt-16 glass-subtle px-6 py-3 rounded-full border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-all backdrop-blur-sm">
             <ArrowLeft size={14} /> Back
          </button>
        </div>
@@ -324,42 +332,36 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: WARM UP (THE BREATHING ROOM)
+  // VIEW: WARM UP (THE BREATHING ROOM) - Enhanced with glass morphism
   // ----------------------------------------------------------------------
   if (mode === 'WARMUP') {
      return (
-        <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full animate-in fade-in duration-1000 overflow-hidden">
-           {/* Breathing Background Animation */}
-           <style>{`
-             @keyframes deep-breathe {
-               0%, 100% { transform: scale(1); opacity: 0.3; }
-               50% { transform: scale(1.3); opacity: 0.6; }
-             }
-             .animate-deep-breathe { animation: deep-breathe 8s infinite ease-in-out; }
-           `}</style>
-
-           {/* The Void Background */}
+        <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full animate-fade-in overflow-hidden">
+           {/* Enhanced Breathing Background Animation */}
            <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[60vh] h-[60vh] rounded-full bg-cyan-900/30 blur-[120px] animate-deep-breathe"></div>
+              <div className="w-[60vh] h-[60vh] rounded-full bg-cyan-900/30 animate-enhanced-breathe"></div>
            </div>
 
            <div className="relative z-10 flex flex-col items-center">
-              <div className="text-cyan-500/50 font-mono text-xs uppercase tracking-[0.3em] mb-12 flex items-center gap-2">
+              <div className="glass-subtle px-6 py-3 rounded-full border-cyan-500/20 text-cyan-500/70 font-mono text-xs uppercase tracking-[0.3em] mb-12 flex items-center gap-2 backdrop-blur-xl animate-scale-in">
                   <Wind size={14} /> Decompression
               </div>
               
-              <div className="text-8xl sm:text-9xl font-mono text-cyan-100/90 font-bold tracking-tighter tabular-nums drop-shadow-2xl">
-                  {Math.floor(warmUpSecondsLeft / 60)}:{(warmUpSecondsLeft % 60).toString().padStart(2, '0')}
+              {/* Glass morphism timer display */}
+              <div className="glass-strong px-16 py-12 rounded-3xl border-cyan-500/20 shadow-glass-lg backdrop-blur-xl animate-scale-in mb-8">
+                 <div className="text-8xl sm:text-9xl font-mono text-cyan-100/90 font-bold tracking-tighter tabular-nums drop-shadow-2xl">
+                    {Math.floor(warmUpSecondsLeft / 60)}:{(warmUpSecondsLeft % 60).toString().padStart(2, '0')}
+                 </div>
               </div>
 
-              <div className="mt-16 text-cyan-200/50 text-sm font-mono max-w-xs text-center leading-relaxed">
+              <div className="mt-16 text-cyan-200/50 text-sm font-mono max-w-xs text-center leading-relaxed animate-fade-in">
                   "Sit in the void.<br/>Let the noise settle."
               </div>
            </div>
            
            <button 
              onClick={handleSkipWarmup}
-             className="absolute bottom-12 z-20 text-zinc-600 hover:text-cyan-400 text-[10px] uppercase tracking-widest transition-colors"
+             className="absolute bottom-12 z-20 glass-subtle px-6 py-3 rounded-full border-zinc-800 text-zinc-600 hover:text-cyan-400 hover:border-cyan-500/30 text-[10px] uppercase tracking-widest transition-all backdrop-blur-sm"
            >
              Skip Calibration
            </button>
@@ -419,17 +421,17 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
               />
             </div>
 
-            {/* THE STREAM RECEIPT */}
+            {/* THE STREAM RECEIPT - Enhanced with glass styling */}
             {mentalNotes.length > 0 && (
-              <div className="bg-cyan-950/10 border border-cyan-500/20 rounded-lg p-4">
+              <div className="glass-subtle border-cyan-500/20 rounded-xl p-4 backdrop-blur-sm animate-scale-in">
                  <label className="block text-[10px] uppercase tracking-widest text-cyan-500/70 mb-3 font-mono flex items-center gap-2">
                    <Brain size={12} /> The Stream (Receipt)
                  </label>
-                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                 <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-thin">
                    {mentalNotes.map((note, idx) => (
-                     <div key={idx} className="flex gap-3 text-xs font-mono group">
-                        <span className="text-zinc-600 group-hover:text-cyan-500/70 transition-colors">[{formatTime(note.timestamp)}]</span>
-                        <span className="text-zinc-300">{note.text}</span>
+                     <div key={idx} className="flex gap-3 text-xs font-mono group glass-subtle p-2 rounded border-cyan-500/10 hover:border-cyan-500/30 transition-all">
+                        <span className="text-zinc-600 group-hover:text-cyan-500/70 transition-colors font-bold px-2 py-0.5 bg-cyan-950/20 rounded">[{formatTime(note.timestamp)}]</span>
+                        <span className="text-zinc-300 flex-1">{note.text}</span>
                      </div>
                    ))}
                  </div>
@@ -465,26 +467,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: RUNNING (THE ARENA)
+  // VIEW: RUNNING (THE ARENA) - Enhanced with glass morphism
   // ----------------------------------------------------------------------
   const progressPercent = Math.min((seconds / targetSeconds) * 100, 100);
   const isOvertime = seconds >= targetSeconds;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] w-full animate-in zoom-in-95 duration-1000 relative">
-      <div className="mb-12 text-center space-y-2 opacity-60 hover:opacity-100 transition-opacity">
-        <h1 className="text-xs text-zinc-500 uppercase tracking-[0.4em] font-bold flex items-center justify-center gap-2">
-           <Zap size={12} /> The Arena
-        </h1>
+      {/* Ambient glow effect when timer is active */}
+      {isActive && (
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-30">
+          <div className={`w-[40vh] h-[40vh] rounded-full ${isOvertime ? 'bg-emerald-500/20' : 'bg-white/10'} blur-[120px] animate-glow-pulse`}></div>
+        </div>
+      )}
+      
+      <div className="relative z-10 mb-12 text-center space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+        <div className="glass-subtle px-4 py-2 rounded-full inline-flex items-center justify-center gap-2 border-zinc-800 backdrop-blur-sm">
+          <h1 className="text-xs text-zinc-500 uppercase tracking-[0.4em] font-bold flex items-center gap-2">
+             <Zap size={12} /> The Arena
+          </h1>
+        </div>
         <div className="flex items-center justify-center gap-2 text-zinc-500 text-[10px] font-mono">
           <Target size={10} /> Contract: {formatTime(targetSeconds)}
         </div>
       </div>
       
-      <div className={`font-mono text-[14vw] sm:text-[9rem] leading-none tracking-tighter tabular-nums mb-12 transition-all duration-500 drop-shadow-2xl ${
-        isActive ? (isOvertime ? 'text-emerald-400' : 'text-white') : 'text-zinc-600'
-      }`}>
-        {formatTime(seconds)}
+      {/* Enhanced timer display with glass morphism */}
+      <div className="glass-strong px-12 py-8 rounded-3xl border-white/10 shadow-glass-lg backdrop-blur-xl mb-8 relative z-10">
+        <div className={`font-mono text-[14vw] sm:text-[9rem] leading-none tracking-tighter tabular-nums transition-all duration-500 drop-shadow-2xl ${
+          isActive ? (isOvertime ? 'text-emerald-400 animate-number-pulse' : 'text-white') : 'text-zinc-600'
+        }`}>
+          {formatTime(seconds)}
+        </div>
       </div>
 
       {/* Progress Line */}
@@ -526,14 +540,17 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         </button>
       </div>
 
-      {/* Stream Input Modal */}
+      {/* Stream Input Modal - Enhanced with glass styling */}
       {showStreamInput && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <form onSubmit={handleStreamSubmit} className="w-full max-w-md bg-zinc-900/90 border border-white/10 p-4 rounded-xl shadow-2xl animate-in slide-in-from-top-4 duration-300">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/70 backdrop-blur-lg animate-fade-in">
+          <form onSubmit={handleStreamSubmit} className="w-full max-w-md glass-strong border-cyan-500/30 p-6 rounded-2xl shadow-glass-lg backdrop-blur-xl animate-scale-in">
             <div className="flex items-center justify-between mb-4">
-               <span className="text-[10px] uppercase tracking-widest text-cyan-500/70 font-mono">The Stream // {formatTime(seconds)}</span>
-               <button type="button" onClick={() => setShowStreamInput(false)} className="text-zinc-500 hover:text-white">
-                 <X size={14} />
+               <div className="flex items-center gap-2">
+                 <Brain size={14} className="text-cyan-500/70" />
+                 <span className="text-[10px] uppercase tracking-widest text-cyan-500/70 font-mono">The Stream // {formatTime(seconds)}</span>
+               </div>
+               <button type="button" onClick={() => setShowStreamInput(false)} className="text-zinc-500 hover:text-white transition-colors">
+                 <X size={16} />
                </button>
             </div>
             <div className="relative">
@@ -543,12 +560,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
                 value={currentStreamNote}
                 onChange={(e) => setCurrentStreamNote(e.target.value)}
                 placeholder="Capture the thought..."
-                className="w-full bg-black/50 text-white p-3 pr-10 rounded-lg border border-zinc-700 focus:border-cyan-500/50 outline-none font-mono text-sm"
+                className="w-full glass-subtle text-white p-4 pr-12 rounded-xl border-cyan-500/20 focus:border-cyan-500/50 outline-none font-mono text-sm transition-all"
               />
-              <button type="submit" className="absolute right-2 top-2 p-1 text-zinc-400 hover:text-cyan-400 transition-colors">
-                <Send size={14} />
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 glass-subtle border-cyan-500/30 rounded-lg text-zinc-400 hover:text-cyan-400 hover:border-cyan-400/50 transition-all">
+                <Send size={16} />
               </button>
             </div>
+            <p className="text-[10px] text-zinc-600 mt-3 font-mono">Press Enter to save • Esc to cancel</p>
           </form>
         </div>
       )}
