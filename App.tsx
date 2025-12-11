@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from './services/storage';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncError, getUserFriendlyErrorMessage } from './services/firebaseSync';
 import { isDailyLimitExceeded, getDailyTotalHours } from './utils/sessionUtils';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from './utils/keyboardShortcuts';
 
 // Detailed sync status type
 type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
@@ -29,8 +30,12 @@ function AppContent() {
   const [dailyTotalHours, setDailyTotalHours] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if any modal is open
+  const isModalOpen = showSettingsModal || showWelcome || showAuthModal || showDailyLimitWarning || showKeyboardShortcuts;
 
   // Initialize data
   useEffect(() => {
@@ -156,6 +161,25 @@ function AppContent() {
     setShowWelcome(false);
     localStorage.setItem('highbeta_has_seen_welcome', 'true');
   };
+
+  const handleCloseModal = () => {
+    if (showKeyboardShortcuts) setShowKeyboardShortcuts(false);
+    else if (showSettingsModal) setShowSettingsModal(false);
+    else if (showWelcome) handleCloseWelcome();
+    else if (showAuthModal) setShowAuthModal(false);
+    else if (showDailyLimitWarning) setShowDailyLimitWarning(false);
+  };
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onShowHelp: () => setShowKeyboardShortcuts(true),
+    onEnterArena: () => view !== ViewMode.FOCUS && setView(ViewMode.FOCUS),
+    onShowDashboard: () => view !== ViewMode.DASHBOARD && setView(ViewMode.DASHBOARD),
+    onShowSettings: () => setShowSettingsModal(true),
+    onCloseModal: handleCloseModal,
+    currentView: view,
+    isModalOpen,
+  });
 
   const handleSessionComplete = (session: Session) => {
     storage.saveSession(session);
@@ -408,6 +432,11 @@ function AppContent() {
           totalHours={dailyTotalHours}
           onClose={() => setShowDailyLimitWarning(false)} 
         />
+      )}
+
+      {/* Keyboard Shortcuts Help */}
+      {showKeyboardShortcuts && (
+        <KeyboardShortcutsHelp onClose={() => setShowKeyboardShortcuts(false)} />
       )}
 
       {/* Footer / Data Controls */}
