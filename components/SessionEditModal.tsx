@@ -43,8 +43,12 @@ export const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, onS
       return;
     }
 
+    // Normalize dates to start of day for comparison
     const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     if (selectedDate > today) {
       setError('Date cannot be in the future');
       return;

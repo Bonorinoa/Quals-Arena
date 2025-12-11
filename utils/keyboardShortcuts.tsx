@@ -31,11 +31,12 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts if user is typing in an input
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement | null;
       if (
-        target.tagName === 'INPUT' ||
+        target &&
+        (target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
+        target.isContentEditable)
       ) {
         // Exception: Escape key should still work
         if (e.key !== 'Escape') return;
