@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from './services/AuthContext';
 import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncError, getUserFriendlyErrorMessage } from './services/firebaseSync';
 import { isDailyLimitExceeded, getDailyTotalHours } from './utils/sessionUtils';
 import { useKeyboardShortcuts, KeyboardShortcutsHelp } from './utils/keyboardShortcuts';
+import { getVisibleSessions } from './services/storage';
 
 // Detailed sync status type
 type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
@@ -45,7 +46,7 @@ function AppContent() {
       // In production you might want migration logic, but for now we reset to ensure clean state
       // storage.clearData(); 
     }
-    setSessions(storage.getSessions());
+    setSessions(getVisibleSessions());
     setSettings(storage.getSettings());
     
     // Show welcome page on first visit
@@ -54,6 +55,11 @@ function AppContent() {
       setShowWelcome(true);
     }
   }, []);
+
+  // Refresh sessions handler for edit/delete
+  const handleSessionsChange = () => {
+    setSessions(getVisibleSessions());
+  };
 
   // Setup cloud sync callbacks when user is authenticated
   useEffect(() => {
@@ -183,11 +189,11 @@ function AppContent() {
 
   const handleSessionComplete = (session: Session) => {
     storage.saveSession(session);
-    setSessions(storage.getSessions()); // Refresh
+    setSessions(getVisibleSessions()); // Refresh
     
     // Check if daily limit has been exceeded after this session
     const todayDate = storage.getLocalDate();
-    const updatedSessions = storage.getSessions();
+    const updatedSessions = getVisibleSessions();
     if (isDailyLimitExceeded(updatedSessions, todayDate)) {
       const totalHours = getDailyTotalHours(updatedSessions, todayDate);
       setDailyTotalHours(totalHours);
@@ -272,7 +278,7 @@ function AppContent() {
       storage.clearData();
       setSessions([]);
       // Reload from storage just to be safe
-      setSessions(storage.getSessions());
+      setSessions(getVisibleSessions());
     }
   };
 
@@ -396,6 +402,7 @@ function AppContent() {
             settings={settings} 
             onStartSession={handleStartSession}
             onRelapse={handleRelapse}
+            onSessionsChange={handleSessionsChange}
           />
         )}
         

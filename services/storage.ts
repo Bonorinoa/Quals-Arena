@@ -135,3 +135,98 @@ export let cloudSettingsSyncCallback: ((settings: UserSettings) => Promise<void>
 export const setCloudSettingsSyncCallback = (callback: ((settings: UserSettings) => Promise<void>) | null) => {
   cloudSettingsSyncCallback = callback;
 };
+
+// --- SESSION EDIT & DELETE FUNCTIONS ---
+
+/**
+ * Update an existing session with new data
+ * Increments editCount and updates lastModified timestamp
+ */
+export const updateSession = (sessionId: string, updates: Partial<Session>): Session | null => {
+  const sessions = getSessions();
+  const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+  
+  if (sessionIndex === -1) {
+    console.error('Session not found:', sessionId);
+    return null;
+  }
+  
+  const session = sessions[sessionIndex];
+  const updatedSession: Session = {
+    ...session,
+    ...updates,
+    id: session.id, // Prevent ID from being changed
+    lastModified: Date.now(),
+    editCount: (session.editCount || 0) + 1,
+  };
+  
+  sessions[sessionIndex] = updatedSession;
+  localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+  
+  // Trigger Firebase Cloud Sync if callback is set
+  if (cloudSyncCallback) {
+    cloudSyncCallback(updatedSession).catch(err => {
+      console.error('Firebase sync failed for updated session:', err);
+    });
+  }
+  
+  return updatedSession;
+};
+
+/**
+ * Delete a session (soft delete by default)
+ * @param sessionId - ID of the session to delete
+ * @param softDelete - If true, marks as deleted but keeps in database. If false, permanently removes.
+ */
+export const deleteSession = (sessionId: string, softDelete: boolean = true): boolean => {
+  const sessions = getSessions();
+  
+  if (softDelete) {
+    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+    
+    if (sessionIndex === -1) {
+      console.error('Session not found:', sessionId);
+      return false;
+    }
+    
+    sessions[sessionIndex] = {
+      ...sessions[sessionIndex],
+      deleted: true,
+      lastModified: Date.now(),
+    };
+    
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+    
+    // Trigger Firebase Cloud Sync if callback is set
+    if (cloudSyncCallback) {
+      cloudSyncCallback(sessions[sessionIndex]).catch(err => {
+        console.error('Firebase sync failed for deleted session:', err);
+      });
+    }
+  } else {
+    // Hard delete - permanently remove from array
+    const filtered = sessions.filter(s => s.id !== sessionId);
+    
+    if (filtered.length === sessions.length) {
+      console.error('Session not found:', sessionId);
+      return false;
+    }
+    
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(filtered));
+    // Note: For hard delete, we don't sync to cloud as the session is gone
+  }
+  
+  return true;
+};
+
+/**
+ * Get visible sessions (excludes soft-deleted sessions by default)
+ * @param includeDeleted - If true, includes soft-deleted sessions
+ */
+export const getVisibleSessions = (includeDeleted: boolean = false): Session[] => {
+  const sessions = getSessions();
+  if (includeDeleted) {
+    return sessions;
+  }
+  return sessions.filter(s => !s.deleted);
+};

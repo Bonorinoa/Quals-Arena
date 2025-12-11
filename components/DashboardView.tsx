@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   ShieldCheck, ChevronDown, ChevronUp, Play, AlertOctagon, 
-  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X
+  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X, Edit2, Trash2
 } from 'lucide-react';
 import { Session, UserSettings } from '../types';
 import { Card } from './ui/Card';
@@ -13,10 +13,12 @@ import {
   differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays,
   startOfMonth, endOfMonth, eachDayOfInterval, getDay
 } from 'date-fns';
-import { getLocalDate } from '../services/storage';
+import { getLocalDate, updateSession, deleteSession } from '../services/storage';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
 import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance, analyzeCommitmentPatterns, getSessionBudgetBalance, MAX_SURPLUS_RATIO } from '../utils/sessionUtils';
+import { SessionEditModal } from './SessionEditModal';
+import { SessionDeleteDialog } from './SessionDeleteDialog';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -29,6 +31,7 @@ interface DashboardViewProps {
   settings: UserSettings;
   onStartSession: () => void;
   onRelapse: () => void;
+  onSessionsChange?: () => void;
 }
 
 const DeltaIndicator: React.FC<{ current: number | string; previous: number | string; label: string; suffix?: string; isInverse?: boolean }> = ({ 
@@ -249,9 +252,11 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
    );
 };
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings, onStartSession, onRelapse }) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings, onStartSession, onRelapse, onSessionsChange }) => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [deletingSession, setDeletingSession] = useState<Session | null>(null);
   
   // -- Metrics Calculation --
   const stats = useMemo(() => {
@@ -327,6 +332,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     if (logged > goal) return 'text-emerald-500'; // Exceeded goal
     if (logged > 0) return 'text-white'; // Making progress
     return 'text-zinc-600'; // No progress yet
+  };
+
+  const handleEditSession = (sessionId: string, updates: Partial<Session>) => {
+    updateSession(sessionId, updates);
+    if (onSessionsChange) {
+      onSessionsChange();
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    deleteSession(sessionId, true); // Soft delete by default
+    if (onSessionsChange) {
+      onSessionsChange();
+    }
   };
 
   // Chart Data
@@ -588,10 +607,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                        <th className="py-2 pr-4">Contract</th>
                        <th className="py-2 pr-4 text-right">Net</th>
                        <th className="py-2 px-4 text-right">Reps</th>
+                       <th className="py-2 pl-4 text-right">Actions</th>
                      </tr>
                    </thead>
                    <tbody className="font-mono text-xs">
-                     {sessions.slice(0, 10).map((s) => {
+                     {sessions.filter(s => !s.deleted).slice(0, 10).map((s) => {
                        const actualBalance = getSessionBudgetBalance(s);
                        const rawBalance = s.durationSeconds - (s.targetDurationSeconds || s.durationSeconds);
                        const isCapped = s.targetDurationSeconds && rawBalance > 0 && actualBalance !== rawBalance;
@@ -599,7 +619,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                        
                        return (
                          <tr key={s.id} className="border-b border-zinc-900 hover:bg-zinc-900/50 group">
-                           <td className="py-3 pr-4 text-zinc-400">{s.date}</td>
+                           <td className="py-3 pr-4 text-zinc-400">
+                             <div className="flex flex-col">
+                               <span>{s.date}</span>
+                               {s.lastModified && (
+                                 <span className="text-[9px] text-zinc-700" title={`Edited ${new Date(s.lastModified).toLocaleString()}`}>
+                                   ✎ {s.editCount && s.editCount > 1 ? `${s.editCount}x` : ''}
+                                 </span>
+                               )}
+                             </div>
+                           </td>
                            <td className="py-3 pr-4 text-white">{(s.durationSeconds / 60).toFixed(0)}m</td>
                            <td className="py-3 pr-4 text-zinc-500">{(s.targetDurationSeconds || 0) / 60}m</td>
                            <td className={`py-3 pr-4 text-right ${actualBalance < 0 ? 'text-red-500' : (actualBalance > 0 ? 'text-emerald-500' : 'text-zinc-600')}`}>
@@ -616,6 +645,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                              </div>
                            </td>
                            <td className="py-3 px-4 text-right text-white">{s.reps}</td>
+                           <td className="py-3 pl-4 text-right">
+                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <button
+                                 onClick={() => setEditingSession(s)}
+                                 className="p-1.5 glass-subtle border-zinc-700 hover:border-emerald-500/50 hover:bg-emerald-500/10 rounded transition-all"
+                                 title="Edit session"
+                                 aria-label="Edit session"
+                               >
+                                 <Edit2 size={12} className="text-zinc-400 hover:text-emerald-400" />
+                               </button>
+                               <button
+                                 onClick={() => setDeletingSession(s)}
+                                 className="p-1.5 glass-subtle border-zinc-700 hover:border-red-500/50 hover:bg-red-500/10 rounded transition-all"
+                                 title="Delete session"
+                                 aria-label="Delete session"
+                               >
+                                 <Trash2 size={12} className="text-zinc-400 hover:text-red-400" />
+                               </button>
+                             </div>
+                           </td>
                          </tr>
                        );
                      })}
@@ -642,6 +691,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
           date={selectedDate} 
           sessions={sessions} 
           onClose={() => setSelectedDate(null)} 
+        />
+      )}
+
+      {/* Session Edit Modal */}
+      {editingSession && (
+        <SessionEditModal
+          session={editingSession}
+          onSave={handleEditSession}
+          onClose={() => setEditingSession(null)}
+        />
+      )}
+
+      {/* Session Delete Dialog */}
+      {deletingSession && (
+        <SessionDeleteDialog
+          session={deletingSession}
+          onConfirm={handleDeleteSession}
+          onClose={() => setDeletingSession(null)}
         />
       )}
     </div>
