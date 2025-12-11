@@ -6,6 +6,8 @@ import { SettingsView } from './components/SettingsView';
 import { WelcomeView } from './components/WelcomeView';
 import { AuthModal } from './components/AuthModal';
 import { DailyLimitWarning } from './components/DailyLimitWarning';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { ViewMode, Session, UserSettings, DEFAULT_SETTINGS } from './types';
 import * as storage from './services/storage';
 import { STORAGE_KEYS } from './services/storage';
@@ -445,6 +447,12 @@ function AppContent() {
       {showKeyboardShortcuts && (
         <KeyboardShortcutsHelp onClose={() => setShowKeyboardShortcuts(false)} />
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
+
+      {/* Offline Indicator */}
+      <OfflineIndicator />
 
       {/* Footer / Data Controls */}
       <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">
