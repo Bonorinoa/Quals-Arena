@@ -16,6 +16,7 @@ import { performFullSync, syncSingleSessionToCloud, syncSettingsToCloud, SyncErr
 import { isDailyLimitExceeded, getDailyTotalHours } from './utils/sessionUtils';
 import { useKeyboardShortcuts, KeyboardShortcutsHelp } from './utils/keyboardShortcuts';
 import { getVisibleSessions } from './services/storage';
+import { applyTheme } from './utils/themes';
 
 // Detailed sync status type
 type SyncStatus = 'idle' | 'syncing-initial' | 'syncing-session' | 'syncing-settings' | 'synced' | 'error' | 'offline';
@@ -49,7 +50,11 @@ function AppContent() {
       // storage.clearData(); 
     }
     setSessions(getVisibleSessions());
-    setSettings(storage.getSettings());
+    const loadedSettings = storage.getSettings();
+    setSettings(loadedSettings);
+    
+    // Apply theme on initial load
+    applyTheme(loadedSettings.theme || 'founder');
     
     // Show welcome page on first visit
     const hasSeenWelcome = localStorage.getItem('highbeta_has_seen_welcome');
@@ -57,6 +62,13 @@ function AppContent() {
       setShowWelcome(true);
     }
   }, []);
+  
+  // Apply theme when settings change
+  useEffect(() => {
+    if (settings.theme) {
+      applyTheme(settings.theme);
+    }
+  }, [settings.theme]);
 
   // Refresh sessions handler for edit/delete
   const handleSessionsChange = () => {
