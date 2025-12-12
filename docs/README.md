@@ -131,6 +131,6 @@ When adding or updating documentation:
 ---
 
 **Last Updated**: 2024-12-12  
-**Documentation Version**: 4.2  
+**Documentation Version**: 4.2 (Updated for v3.3.0 release)  
 **Project Version**: v3.3.0  
 **V4.0 Progress**: 37% complete (10/27 features implemented)
