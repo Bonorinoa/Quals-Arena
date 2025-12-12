@@ -5,9 +5,10 @@ import {
 } from 'recharts';
 import { 
   ShieldCheck, ChevronDown, ChevronUp, Play, AlertOctagon, 
-  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X, Edit2, Trash2
+  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X, Edit2, Trash2, BarChart3
 } from 'lucide-react';
 import { Session, UserSettings } from '../types';
+import { getEnabledMetrics } from '../utils/customMetrics';
 import { Card } from './ui/Card';
 import { 
   differenceInDays, startOfWeek, endOfWeek, isWithinInterval, parseISO, format, subDays,
@@ -335,6 +336,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       commitmentPattern,
     };
   }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours, settings.activeDays]);
+  
+  // Calculate custom metrics
+  const customMetrics = useMemo(() => {
+    const enabledIds = settings.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency'];
+    const activeDays = settings.activeDays || [1, 2, 3, 4, 5];
+    return getEnabledMetrics(sessions, enabledIds, activeDays, 7);
+  }, [sessions, settings.enabledMetrics, settings.activeDays]);
 
   const getBalanceColor = (logged: number, goal: number) => {
     if (logged > goal) return 'text-emerald-500'; // Exceeded goal
@@ -455,6 +463,43 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
 
         {showAnalytics && (
           <div className="pb-20 space-y-6 animate-slide-up px-4">
+            
+            {/* CUSTOM METRICS */}
+            {customMetrics.length > 0 && (
+              <div className="card-glass border-zinc-800">
+                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <BarChart3 size={12} /> Custom Metrics (7 Days)
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {customMetrics.map((metric) => (
+                    <div key={metric.id} className="glass-subtle p-4 rounded-lg border border-zinc-800">
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">
+                        {metric.name}
+                      </div>
+                      {metric.value !== undefined ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-mono font-bold text-white">
+                            {metric.value}
+                          </span>
+                          {metric.unit && (
+                            <span className="text-sm text-zinc-500 font-mono">
+                              {metric.unit}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-zinc-600 font-mono">
+                          No data
+                        </div>
+                      )}
+                      <div className="text-[10px] text-zinc-600 mt-1 font-mono">
+                        {metric.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* HEATMAP LEDGER */}
             <div className="card-glass border-zinc-800">

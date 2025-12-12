@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Save, X, Palette, Calendar } from 'lucide-react';
+import { Save, X, Palette, Calendar, BarChart3 } from 'lucide-react';
 import { UserSettings, ThemeName } from '../types';
 import { themes } from '../utils/themes';
+import { calculateAllMetrics } from '../utils/customMetrics';
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -13,6 +14,9 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, onClose }) => {
   const [formData, setFormData] = useState<UserSettings>(settings);
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  // Get all available metrics for the toggle list
+  const availableMetrics = calculateAllMetrics([], formData.activeDays || [1, 2, 3, 4, 5]);
 
   const handleChange = (field: keyof UserSettings, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -26,6 +30,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
     } else {
       // Add day
       handleChange('activeDays', [...activeDays, dayIndex].sort());
+    }
+  };
+  
+  const handleMetricToggle = (metricId: string) => {
+    const enabled = formData.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency'];
+    if (enabled.includes(metricId)) {
+      // Remove metric (but keep at least one)
+      if (enabled.length > 1) {
+        handleChange('enabledMetrics', enabled.filter(id => id !== metricId));
+      }
+    } else {
+      // Add metric (max 5)
+      if (enabled.length < 5) {
+        handleChange('enabledMetrics', [...enabled, metricId]);
+      }
     }
   };
 
@@ -177,6 +196,64 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
             </div>
             <p className="text-xs text-zinc-500 mt-2">
               Daily goal only applies on selected days
+            </p>
+          </div>
+
+          {/* Custom Metrics Selection */}
+          <div className="pt-4 border-t border-zinc-800">
+            <label className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 mb-3 font-mono">
+              <BarChart3 size={14} />
+              Custom Metrics (Max 5)
+            </label>
+            <div className="space-y-2">
+              {availableMetrics.map((metric) => {
+                const isEnabled = (formData.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency']).includes(metric.id);
+                const enabledCount = (formData.enabledMetrics || []).length;
+                const canToggle = isEnabled || enabledCount < 5;
+                const isLastEnabled = isEnabled && enabledCount === 1;
+                
+                return (
+                  <button
+                    key={metric.id}
+                    type="button"
+                    onClick={() => !isLastEnabled && canToggle && handleMetricToggle(metric.id)}
+                    disabled={!canToggle || isLastEnabled}
+                    className={`w-full p-3 rounded-lg border transition-all text-left ${
+                      isEnabled 
+                        ? 'border-white/30 bg-white/10' 
+                        : canToggle
+                        ? 'border-white/10 bg-white/5 hover:border-white/20'
+                        : 'border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed'
+                    }`}
+                    title={isLastEnabled ? 'At least one metric must be enabled' : metric.description}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-4 h-4 rounded border ${
+                            isEnabled ? 'bg-white border-white' : 'border-white/30'
+                          } flex items-center justify-center`}>
+                            {isEnabled && (
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6L5 9L10 3" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-sm font-mono font-semibold text-white">
+                            {metric.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-400 ml-6">
+                          {metric.description}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-zinc-500 mt-2">
+              Metrics are calculated from last 7 days of sessions
             </p>
           </div>
 

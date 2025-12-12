@@ -20,6 +20,15 @@ export interface Session {
 
 export type ThemeName = 'founder' | 'calm';
 
+export interface CustomMetric {
+  id: string;
+  name: string;
+  description: string;
+  value?: number;
+  unit?: string;
+  format?: 'percentage' | 'number' | 'time';
+}
+
 export interface UserSettings {
   weeklyRepTarget: number;
   dailyTimeGoalHours: number; // Daily Deep Work Goal (e.g., 4 hours)
@@ -28,6 +37,7 @@ export interface UserSettings {
   substanceFreeStartDate: string;
   theme?: ThemeName; // Color theme preference
   activeDays?: number[]; // Days of week where daily goal applies (0=Sunday, 6=Saturday)
+  enabledMetrics?: string[]; // IDs of metrics to display
 }
 
 export interface DailyStats {
@@ -57,5 +67,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   name: "highBeta User",
   substanceFreeStartDate: new Date().toISOString(),
   theme: 'founder',
-  activeDays: [1, 2, 3, 4, 5] // Monday-Friday by default
+  activeDays: [1, 2, 3, 4, 5], // Monday-Friday by default
+  enabledMetrics: ['focusQuality', 'deepWorkRatio', 'consistency'] // Default metrics
 };
