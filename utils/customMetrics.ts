@@ -155,7 +155,7 @@ export const calculateAvgSessionDuration = (sessions: Session[]): CustomMetric =
     description: 'Average session duration',
     value: avgMinutes,
     unit: 'min',
-    format: 'number'
+    format: 'time'
   };
 };
 

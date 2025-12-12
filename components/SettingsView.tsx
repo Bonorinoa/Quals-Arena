@@ -33,18 +33,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
     }
   };
   
+  const canRemoveMetric = (metricId: string, currentEnabled: string[]): boolean => {
+    return currentEnabled.includes(metricId) && currentEnabled.length > 1;
+  };
+  
+  const canAddMetric = (metricId: string, currentEnabled: string[]): boolean => {
+    return !currentEnabled.includes(metricId) && currentEnabled.length < 5;
+  };
+
   const handleMetricToggle = (metricId: string) => {
     const enabled = formData.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency'];
-    if (enabled.includes(metricId)) {
-      // Remove metric (but keep at least one)
-      if (enabled.length > 1) {
-        handleChange('enabledMetrics', enabled.filter(id => id !== metricId));
-      }
-    } else {
-      // Add metric (max 5)
-      if (enabled.length < 5) {
-        handleChange('enabledMetrics', [...enabled, metricId]);
-      }
+    if (enabled.includes(metricId) && canRemoveMetric(metricId, enabled)) {
+      handleChange('enabledMetrics', enabled.filter(id => id !== metricId));
+    } else if (!enabled.includes(metricId) && canAddMetric(metricId, enabled)) {
+      handleChange('enabledMetrics', [...enabled, metricId]);
     }
   };
 
@@ -207,21 +209,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
             </label>
             <div className="space-y-2">
               {availableMetrics.map((metric) => {
-                const isEnabled = (formData.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency']).includes(metric.id);
-                const enabledCount = (formData.enabledMetrics || []).length;
-                const canToggle = isEnabled || enabledCount < 5;
-                const isLastEnabled = isEnabled && enabledCount === 1;
+                const enabled = formData.enabledMetrics || ['focusQuality', 'deepWorkRatio', 'consistency'];
+                const isEnabled = enabled.includes(metric.id);
+                const isLastEnabled = isEnabled && enabled.length === 1;
+                const canToggleMetric = isEnabled ? canRemoveMetric(metric.id, enabled) : canAddMetric(metric.id, enabled);
                 
                 return (
                   <button
                     key={metric.id}
                     type="button"
-                    onClick={() => !isLastEnabled && canToggle && handleMetricToggle(metric.id)}
-                    disabled={!canToggle || isLastEnabled}
+                    onClick={() => handleMetricToggle(metric.id)}
+                    disabled={!canToggleMetric}
                     className={`w-full p-3 rounded-lg border transition-all text-left ${
                       isEnabled 
                         ? 'border-white/30 bg-white/10' 
-                        : canToggle
+                        : canToggleMetric
                         ? 'border-white/10 bg-white/5 hover:border-white/20'
                         : 'border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed'
                     }`}
