@@ -4,7 +4,22 @@
 
 @layer base {
   :root {
-    /* Color System */
+    /* Theme-specific colors (updated dynamically) */
+    --color-bg-primary: #05050a;
+    --color-bg-secondary: #0a1628;
+    --color-bg-tertiary: #162d4d;
+    --color-accent-primary: #10b981;
+    --color-accent-secondary: #059669;
+    --color-accent-hover: #047857;
+    --color-glass-light: rgba(255, 255, 255, 0.03);
+    --color-glass-medium: rgba(255, 255, 255, 0.05);
+    --color-glow: #10b981;
+    --color-glow-rgba: 16, 185, 129;
+    --color-text-primary: #e4e4e7;
+    --color-text-secondary: #a1a1aa;
+    --color-text-muted: #71717a;
+    
+    /* Legacy color system (kept for backward compatibility) */
     --color-abyss: #05050a;
     --color-ocean-deep: #0a1628;
     --color-ocean: #162d4d;
@@ -18,16 +33,29 @@
     
     /* Shadows */
     --shadow-depth: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.3);
+    --shadow-glow: 0 0 20px rgba(var(--color-glow-rgba), 0.3);
   }
   
   body {
-    @apply bg-abyss-950 text-zinc-200 antialiased;
+    @apply text-zinc-200 antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--color-bg-primary);
+    background-attachment: fixed;
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Founder Theme (Default) */
+  body.theme-founder {
     background-image: 
       radial-gradient(ellipse at top, rgba(10, 22, 40, 0.4) 0%, transparent 50%),
       radial-gradient(ellipse at bottom, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
-    background-attachment: fixed;
+  }
+  
+  /* Calm Theme */
+  body.theme-calm {
+    background-image: 
+      radial-gradient(ellipse at top, rgba(20, 20, 40, 0.5) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
   }
 }
 
@@ -71,22 +99,43 @@
   
   /* Glow Effects */
   .glow {
-    @apply shadow-glow;
+    box-shadow: 0 0 20px rgba(var(--color-glow-rgba), 0.3);
   }
   
   .glow-strong {
-    @apply shadow-glow-lg;
+    box-shadow: 0 0 40px rgba(var(--color-glow-rgba), 0.4);
   }
   
   .glow-pulse {
     @apply animate-glow-pulse;
   }
   
+  /* Theme-aware accent colors */
+  .accent-primary {
+    color: var(--color-accent-primary);
+  }
+  
+  .accent-bg {
+    background-color: var(--color-accent-primary);
+  }
+  
+  .accent-border {
+    border-color: var(--color-accent-primary);
+  }
+  
+  .accent-glow {
+    box-shadow: 0 0 20px rgba(var(--color-glow-rgba), 0.3);
+  }
+  
   /* Button Enhancements */
   .btn-primary {
     @apply px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-sm;
-    @apply transition-all duration-200 hover:bg-frost-500 hover:shadow-glow;
-    @apply active:scale-95;
+    @apply transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-accent-primary);
+    box-shadow: 0 0 20px rgba(var(--color-glow-rgba), 0.4);
   }
   
   .btn-glass {
@@ -105,8 +154,12 @@
   /* Input Enhancements */
   .input-glass {
     @apply glass px-4 py-3 text-white font-mono text-sm w-full;
-    @apply focus:border-ember-500 focus:shadow-inner-glow outline-none;
-    @apply transition-all duration-200;
+    @apply outline-none transition-all duration-200;
+  }
+  
+  .input-glass:focus {
+    border-color: var(--color-accent-primary);
+    box-shadow: inset 0 0 20px rgba(var(--color-glow-rgba), 0.1);
   }
   
   /* Card Enhancements */
@@ -157,11 +210,11 @@
   /* Enhanced animations for timer */
   @keyframes glow-pulse {
     0%, 100% { 
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 20px rgba(var(--color-glow-rgba), 0.3);
       transform: scale(1);
     }
     50% { 
-      box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 40px rgba(var(--color-glow-rgba), 0.6);
       transform: scale(1.02);
     }
   }

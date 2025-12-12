@@ -297,8 +297,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
     const totalReps = getTotalReps(sessions);
     const globalSER = calculateSER(totalReps, totalDuration, 3600);
     const daysSober = differenceInDays(todayDate, parseISO(settings.substanceFreeStartDate));
+    
+    // Check if today is an active day (respects custom weekly schedule)
+    const todayDayOfWeek = getDay(todayDate); // 0 = Sunday, 6 = Saturday
+    const activeDays = settings.activeDays || [1, 2, 3, 4, 5]; // Default to Mon-Fri
+    const isTodayActive = activeDays.includes(todayDayOfWeek);
+    
     const dailyGoalSeconds = (settings.dailyTimeGoalHours || 4) * 3600;
-    const volumeProgress = Math.min((todayDuration / dailyGoalSeconds) * 100, 100);
+    // Only show progress if today is an active day
+    const volumeProgress = isTodayActive ? Math.min((todayDuration / dailyGoalSeconds) * 100, 100) : 0;
 
     // Commitment pattern analysis
     const commitmentPattern = analyzeCommitmentPatterns(sessions);
@@ -323,10 +330,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
       timeBudget: {
         goalSeconds: dailyGoalSeconds,
         volumeProgress: volumeProgress,
+        isTodayActive: isTodayActive,
       },
       commitmentPattern,
     };
-  }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours]);
+  }, [sessions, settings.substanceFreeStartDate, settings.dailyTimeGoalHours, settings.activeDays]);
 
   const getBalanceColor = (logged: number, goal: number) => {
     if (logged > goal) return 'text-emerald-500'; // Exceeded goal
@@ -397,16 +405,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono flex items-center gap-1 mb-1">
                       <Scale size={10} /> Daily Progress
                     </span>
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-xl font-mono font-bold ${getBalanceColor(stats.today.durationSeconds, stats.timeBudget.goalSeconds)}`}>
-                        {stats.today.durationSeconds > stats.timeBudget.goalSeconds ? '+' : ''}
-                        {formatTimeFull(stats.today.durationSeconds)} 
-                      </span>
-                      <span className="text-zinc-600 text-sm font-mono">/ {formatTimeFull(settings.dailyTimeGoalHours * 3600)}</span>
-                    </div>
-                    <div className="w-40 h-1 glass-subtle mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
-                       <div className="h-full bg-gradient-to-r from-ember-700 to-ember-500 transition-all duration-500 shadow-glow" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
-                    </div>
+                    {stats.timeBudget.isTodayActive ? (
+                      <>
+                        <div className="flex items-baseline gap-2">
+                          <span className={`text-xl font-mono font-bold ${getBalanceColor(stats.today.durationSeconds, stats.timeBudget.goalSeconds)}`}>
+                            {stats.today.durationSeconds > stats.timeBudget.goalSeconds ? '+' : ''}
+                            {formatTimeFull(stats.today.durationSeconds)} 
+                          </span>
+                          <span className="text-zinc-600 text-sm font-mono">/ {formatTimeFull(settings.dailyTimeGoalHours * 3600)}</span>
+                        </div>
+                        <div className="w-40 h-1 glass-subtle mt-1 rounded-full overflow-hidden relative" title="Daily Volume Progress">
+                           <div className="h-full bg-gradient-to-r from-ember-700 to-ember-500 transition-all duration-500 shadow-glow" style={{ width: `${Math.max(stats.timeBudget.volumeProgress, stats.today.durationSeconds > 0 ? 2 : 0)}%` }} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl font-mono font-bold text-zinc-600">
+                            {formatTimeFull(stats.today.durationSeconds)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-zinc-600 mt-1 font-mono">Rest day (no goal)</span>
+                      </>
+                    )}
                  </div>
               </div>
 

@@ -18,12 +18,16 @@ export interface Session {
   deleted?: boolean; // Soft delete flag
 }
 
+export type ThemeName = 'founder' | 'calm';
+
 export interface UserSettings {
   weeklyRepTarget: number;
   dailyTimeGoalHours: number; // Daily Deep Work Goal (e.g., 4 hours)
   startDate: string; // When the protocol started
   name: string;
   substanceFreeStartDate: string;
+  theme?: ThemeName; // Color theme preference
+  activeDays?: number[]; // Days of week where daily goal applies (0=Sunday, 6=Saturday)
 }
 
 export interface DailyStats {
@@ -51,5 +55,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   dailyTimeGoalHours: 4,
   startDate: new Date().toISOString(),
   name: "highBeta User",
-  substanceFreeStartDate: new Date().toISOString()
+  substanceFreeStartDate: new Date().toISOString(),
+  theme: 'founder',
+  activeDays: [1, 2, 3, 4, 5] // Monday-Friday by default
 };
