@@ -178,15 +178,15 @@ match /users/{userId}/{document=**} {
 ## Testing Checklist
 
 ### Manual Testing
-- [ ] Sign in with Google works
-- [ ] Sign out works
-- [ ] Auth state persists across page reloads
-- [ ] Sessions sync to Firestore on completion
-- [ ] Settings sync when changed
-- [ ] Sync status indicator shows correct states
+- [X] Sign in with Google works
+- [X] Sign out works
+- [X] Auth state persists across page reloads
+- [X] Sessions sync to Firestore on completion
+- [X] Settings sync when changed
+- [X] Sync status indicator shows correct states
 - [ ] Error messages display for failed auth
-- [ ] App works without signing in (local mode)
-- [ ] Multi-device sync works (test on 2 devices)
+- [X] App works without signing in (local mode)
+- [X] Multi-device sync works (test on 2 devices)
 
 ### Automated Testing
 ```bash
