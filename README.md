@@ -205,15 +205,18 @@ For comprehensive documentation, see **[/docs](./docs/README.md)**
 *   **[Documentation Index](./docs/README.md)** - Complete documentation guide
 
 **Planning & Strategy** (`/docs/planning`):
-*   **[V4_FOUNDATION.md](./docs/planning/V4_FOUNDATION.md)** - Detailed architectural foundations for v4.x (NEW ✨)
 *   **[V4_ROADMAP.md](./docs/planning/V4_ROADMAP.md)** - Comprehensive v4.0 feature gap analysis (27 features)
+*   **[V4_FOUNDATION.md](./docs/planning/V4_FOUNDATION.md)** - Detailed architectural foundations for v4.x
+*   **[V4_COMPLETION_ASSESSMENT.md](./docs/planning/V4_COMPLETION_ASSESSMENT.md)** - Progress assessment toward v4.0
+*   **[CATEGORY_3_IMPLEMENTATION_PLAN.md](./docs/planning/CATEGORY_3_IMPLEMENTATION_PLAN.md)** - UI/UX enhancements roadmap
 *   **[SURPLUS_CAP_STRATEGY.md](./docs/planning/SURPLUS_CAP_STRATEGY.md)** - Gaming prevention strategies analysis
 *   **[CLOUD_BACKUP_ALTERNATIVES.md](./docs/planning/CLOUD_BACKUP_ALTERNATIVES.md)** - Authentication options guide
 
 **Development Documentation** (`/docs/development`):
+*   **[FIREBASE_INTEGRATION_TEST_REPORT.md](./docs/development/FIREBASE_INTEGRATION_TEST_REPORT.md)** - Category 1 testing results (173 tests)
 *   **[DESIGN_SYSTEM.md](./docs/development/DESIGN_SYSTEM.md)** - UI/UX design system and guidelines
 *   **[TEST_DOCUMENTATION.md](./docs/development/TEST_DOCUMENTATION.md)** - Test suite guide and debugging tips
-*   **[V3_EVALUATION_REPORT.md](./docs/development/V3_EVALUATION_REPORT.md)** - v3.0 testing results (95 tests)
+*   **[V3_EVALUATION_REPORT.md](./docs/development/V3_EVALUATION_REPORT.md)** - v3.0 testing results
 
 ---
 *"Owners build assets; employees log hours."*

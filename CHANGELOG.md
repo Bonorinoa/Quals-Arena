@@ -5,6 +5,109 @@ All notable changes to the highBeta project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2024-12-12
+
+### Added - Category 3 UI/UX Enhancements (Part 1)
+
+This release implements 3 of 7 Category 3 features from the V4 Roadmap, significantly improving user experience and productivity workflows.
+
+#### Session Management (Feature 3.2)
+- **Session Edit Modal**: Edit completed sessions with form validation
+  - Modify duration, reps, mental notes, and notes
+  - Real-time validation to prevent invalid data
+  - Metrics automatically recalculate after edits
+  - Glass morphism design matching app aesthetic
+  - Mobile-responsive layout
+  
+- **Session Delete Dialog**: Safe deletion with confirmation
+  - Confirmation dialog prevents accidental deletions
+  - Clear warning about data loss
+  - Undo is not available after deletion
+  - Integrated into session cards in Dashboard
+  
+- **Implementation**: `SessionEditModal.tsx`, `SessionDeleteDialog.tsx`
+- **User Impact**: High - frequently requested feature
+- **Test Coverage**: Manual testing completed
+- **Status**: ✅ Production-ready
+
+#### Keyboard Shortcuts (Feature 3.6)
+- **Global Navigation Shortcuts**:
+  - `?` - Show keyboard shortcuts help
+  - `E` - Enter Arena (start new session)
+  - `D` - Go to Dashboard
+  - `S` - Go to Settings
+  - `Escape` - Close modals
+  
+- **Context-Aware Behavior**:
+  - Shortcuts disabled when typing in input fields
+  - Help modal shows all available shortcuts
+  - Visual keyboard indicators in UI
+  - Accessible for power users
+  
+- **Implementation**: `utils/keyboardShortcuts.tsx`
+- **User Impact**: Medium - enhances productivity for power users
+- **Test Coverage**: Manual testing completed
+- **Status**: ✅ Production-ready
+
+#### PWA Enhancements (Feature 3.7)
+- **Progressive Web App Features**:
+  - Service worker for offline caching
+  - App manifest with proper metadata
+  - Installable as standalone app
+  - Add to home screen support (mobile)
+  - Offline-first architecture maintained
+  - Automatic updates on app reload
+  
+- **Cache Strategy**:
+  - Runtime caching for Google Fonts
+  - Static assets cached on install
+  - 365-day cache expiration for fonts
+  - Network-first for API calls
+  
+- **Implementation**: `vite.config.ts`, `PWAInstallPrompt.tsx`
+- **User Impact**: High - enables mobile app experience
+- **Bundle Size**: Service worker adds ~50 KB
+- **Status**: ✅ Production-ready
+
+### Changed
+- **Build Configuration**: Enhanced Vite PWA plugin configuration
+- **App Entry Point**: Integrated keyboard shortcuts system globally
+- **Dashboard View**: Added edit/delete buttons to session cards
+- **User Experience**: More native app-like on mobile devices
+
+### Technical
+- **Dependencies**: 
+  - Added `vite-plugin-pwa@1.2.0` for PWA support
+  - Added `workbox-window@7.4.0` for service worker management
+  
+- **Bundle Size**:
+  - Main bundle: 1,175.73 kB (309.89 kB gzipped)
+  - Service worker: ~50 kB additional
+  - Build warning: Consider code splitting (>500 kB)
+  
+- **Testing**:
+  - All 173 tests still passing (100%)
+  - Manual PWA testing on mobile devices
+  - Keyboard shortcuts tested across browsers
+  - Session edit/delete workflow validated
+
+### Documentation
+- Documentation updates pending to reflect new features
+- V4 Roadmap progress: Category 3 now 43% complete (3/7 features)
+- Overall v4.0 progress: ~37% complete (10/27 features)
+
+### Next Steps (v4.0)
+Remaining Category 3 features for v4.0 release:
+- [ ] Enhanced Timer View Polish (3.1) - glass effects, animations
+- [ ] Session Search & Filtering (3.3) - find specific sessions
+- [ ] Dark/Light Mode Toggle (3.4) - theme switching
+- [ ] Export Charts as Images (3.5) - share progress
+
+Critical for v4.0 release:
+- [ ] Accessibility Audit & Fixes (5.2) - WCAG AA compliance
+
+---
+
 ## [3.2.1] - 2024-12-10
 
 ### Added - Category 1 Testing & Category 3 Planning
