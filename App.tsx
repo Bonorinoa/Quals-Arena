@@ -299,10 +299,18 @@ function AppContent() {
   return (
     <div className="min-h-screen text-zinc-200 font-sans selection:bg-white selection:text-black">
       
+      {/* Skip to main content link for keyboard users */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-lg focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+      
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 h-16 border-b border-zinc-900 glass-strong z-50 flex items-center justify-between px-6">
+      <nav className="fixed top-0 left-0 right-0 h-16 border-b border-zinc-900 glass-strong z-50 flex items-center justify-between px-6" aria-label="Main navigation">
         <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-white rotate-45 shadow-glow"></div>
+          <div className="w-3 h-3 bg-white rotate-45 shadow-glow" aria-hidden="true"></div>
           <span className="font-mono font-bold tracking-tighter text-lg hidden sm:inline">highBeta</span>
         </div>
         
@@ -310,10 +318,15 @@ function AppContent() {
         <div className="flex items-center gap-2">
           {/* Sync Status Indicator */}
           {user && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg">
+            <div 
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {(syncStatus === 'syncing-initial' || syncStatus === 'syncing-session' || syncStatus === 'syncing-settings') && (
                 <>
-                  <Cloud className="text-blue-400 animate-pulse" size={14} />
+                  <Cloud className="text-blue-400 animate-pulse" size={14} aria-hidden="true" />
                   <span className="text-xs text-zinc-400">
                     {syncStatus === 'syncing-initial' && 'Syncing...'}
                     {syncStatus === 'syncing-session' && 'Syncing session...'}
@@ -323,25 +336,25 @@ function AppContent() {
               )}
               {syncStatus === 'synced' && (
                 <>
-                  <CheckCircle2 className="text-green-400" size={14} />
+                  <CheckCircle2 className="text-green-400" size={14} aria-hidden="true" />
                   <span className="text-xs text-zinc-400">Synced</span>
                 </>
               )}
               {syncStatus === 'error' && (
                 <>
-                  <AlertCircle className="text-red-400" size={14} />
+                  <AlertCircle className="text-red-400" size={14} aria-hidden="true" />
                   <span className="text-xs text-zinc-400">Sync Error</span>
                 </>
               )}
               {syncStatus === 'offline' && (
                 <>
-                  <CloudOff className="text-orange-400" size={14} />
+                  <CloudOff className="text-orange-400" size={14} aria-hidden="true" />
                   <span className="text-xs text-zinc-400">Offline</span>
                 </>
               )}
               {syncStatus === 'idle' && (
                 <>
-                  <Cloud className="text-zinc-500" size={14} />
+                  <Cloud className="text-zinc-500" size={14} aria-hidden="true" />
                   <span className="text-xs text-zinc-500">Cloud</span>
                 </>
               )}
@@ -351,19 +364,20 @@ function AppContent() {
           {/* Auth Button */}
           <button
             onClick={() => setShowAuthModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all"
-            title={user ? 'Account' : 'Sign In'}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-white/20"
+            aria-label={user ? `Account settings for ${user.displayName || 'user'}` : 'Sign in to sync data'}
           >
             {user ? (
               <>
                 {user.photoURL ? (
                   <img 
                     src={user.photoURL} 
-                    alt={user.displayName || 'User'} 
+                    alt="" 
                     className="w-6 h-6 rounded-full border border-white/20"
+                    aria-hidden="true"
                   />
                 ) : (
-                  <User className="text-zinc-400" size={16} />
+                  <User className="text-zinc-400" size={16} aria-hidden="true" />
                 )}
                 <span className="text-xs text-zinc-300 hidden sm:inline">
                   {user.displayName?.split(' ')[0] || 'Account'}
@@ -371,7 +385,7 @@ function AppContent() {
               </>
             ) : (
               <>
-                <User className="text-zinc-400" size={16} />
+                <User className="text-zinc-400" size={16} aria-hidden="true" />
                 <span className="text-xs text-zinc-400 hidden sm:inline">Sign In</span>
               </>
             )}
@@ -381,23 +395,29 @@ function AppContent() {
 
       {/* Sync Error Banner */}
       {syncError && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4 animate-slide-down">
+        <div 
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4 animate-slide-down"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 shadow-xl backdrop-blur-sm">
             <div className="flex items-start gap-3">
-              <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
+              <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} aria-hidden="true" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-red-400 mb-3">{syncError}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleRetrySync}
-                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 rounded-lg text-xs font-medium transition-all flex items-center gap-2"
+                    aria-label="Retry syncing data"
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 rounded-lg text-xs font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-400"
                   >
-                    <RefreshCw size={12} />
+                    <RefreshCw size={12} aria-hidden="true" />
                     Retry Sync
                   </button>
                   <button
                     onClick={handleDismissError}
-                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 rounded-lg text-xs font-medium transition-all"
+                    aria-label="Dismiss error"
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 rounded-lg text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/20"
                   >
                     Dismiss
                   </button>
@@ -409,7 +429,7 @@ function AppContent() {
       )}
 
       {/* Main Content Area */}
-      <main className="pt-24 px-4 sm:px-6 max-w-6xl mx-auto">
+      <main id="main-content" className="pt-24 px-4 sm:px-6 max-w-6xl mx-auto">
         {view === ViewMode.DASHBOARD && (
           <DashboardView 
             sessions={sessions} 
@@ -467,68 +487,79 @@ function AppContent() {
       <OfflineIndicator />
 
       {/* Footer / Data Controls */}
-      <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">
+      <footer className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40" aria-label="Quick actions">
         <button 
           onClick={() => setShowWelcome(true)}
-          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
-          title="Welcome & Guide"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Welcome and guide"
         >
-          <HelpCircle size={18} />
+          <HelpCircle size={18} aria-hidden="true" />
         </button>
 
         <button 
           onClick={() => setShowSettingsModal(true)}
-          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
-          title="Settings"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Settings"
         >
-          <Settings size={18} />
+          <Settings size={18} aria-hidden="true" />
         </button>
 
         <button 
           onClick={() => setShowDataMenu(!showDataMenu)}
-          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive"
-          title="Data Management"
+          className="w-10 h-10 glass border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-600 transition-all rounded-full shadow-glass interactive focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Data management menu"
+          aria-expanded={showDataMenu}
+          aria-haspopup="menu"
         >
-          <Download size={18} />
+          <Download size={18} aria-hidden="true" />
         </button>
         
         {showDataMenu && (
-          <div className="glass border-zinc-800 p-2 rounded-lg shadow-glass-lg flex flex-col gap-2 animate-slide-up w-48">
+          <div className="glass border-zinc-800 p-2 rounded-lg shadow-glass-lg flex flex-col gap-2 animate-slide-up w-48" role="menu">
              <button 
                 onClick={handleBackupJSON}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left focus:outline-none focus:ring-2 focus:ring-white/20"
+                role="menuitem"
+                aria-label="Backup data as JSON"
              >
-               <FileJson size={14} /> Backup (JSON)
+               <FileJson size={14} aria-hidden="true" /> Backup (JSON)
              </button>
              
              <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left focus:outline-none focus:ring-2 focus:ring-white/20"
+                role="menuitem"
+                aria-label="Restore data from JSON backup"
              >
-               <Upload size={14} /> Restore (JSON)
+               <Upload size={14} aria-hidden="true" /> Restore (JSON)
              </button>
              <input 
                type="file" 
                ref={fileInputRef} 
                onChange={handleRestoreJSON} 
                accept=".json" 
-               className="hidden" 
+               className="hidden"
+               aria-label="Select JSON file to restore"
              />
 
-             <div className="h-px bg-zinc-800 my-1"></div>
+             <div className="h-px bg-zinc-800 my-1" role="separator"></div>
 
              <button 
                 onClick={handleExportCSV}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap text-left focus:outline-none focus:ring-2 focus:ring-white/20"
+                role="menuitem"
+                aria-label="Export data as CSV"
              >
-               <Download size={14} /> Export CSV
+               <Download size={14} aria-hidden="true" /> Export CSV
              </button>
              
              <button 
                 onClick={handleClearData}
-                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-red-900 hover:text-red-500 hover:bg-red-950/30 rounded transition-colors whitespace-nowrap text-left"
+                className="flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider text-red-900 hover:text-red-500 hover:bg-red-950/30 rounded transition-colors whitespace-nowrap text-left focus:outline-none focus:ring-2 focus:ring-red-400"
+                role="menuitem"
+                aria-label="Reset protocol and clear all data"
              >
-               <Trash2 size={14} /> Reset Protocol
+               <Trash2 size={14} aria-hidden="true" /> Reset Protocol
              </button>
           </div>
         )}
