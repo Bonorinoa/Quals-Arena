@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Focus Trap Utility for Modal Dialogs
  * Ensures keyboard focus stays within a modal dialog for accessibility
@@ -65,5 +67,3 @@ export function useFocusTrapHook(isActive: boolean) {
   useFocusTrap(containerRef, isActive);
   return containerRef;
 }
-
-import React from 'react';

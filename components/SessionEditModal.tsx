@@ -137,7 +137,7 @@ export const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, onS
               min="0"
               max="50"
               aria-required="true"
-              aria-invalid={reps < 0}
+              aria-invalid={reps < 0 ? 'true' : 'false'}
               aria-describedby="reps-description"
               className="w-full glass-subtle text-white p-3 rounded-lg border-zinc-700 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono text-lg transition-all"
               autoFocus
@@ -156,7 +156,7 @@ export const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, onS
               onChange={(e) => setDurationMinutes(Math.max(1, parseInt(e.target.value) || 1))}
               min="1"
               aria-required="true"
-              aria-invalid={durationMinutes <= 0}
+              aria-invalid={durationMinutes <= 0 ? 'true' : 'false'}
               aria-describedby="duration-description"
               className="w-full glass-subtle text-white p-3 rounded-lg border-zinc-700 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono text-lg transition-all"
             />
