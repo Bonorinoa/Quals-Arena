@@ -370,13 +370,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   }
 
   // ----------------------------------------------------------------------
-  // VIEW: LOGGING
+  // VIEW: LOGGING - Enhanced with glass morphism
   // ----------------------------------------------------------------------
   if (mode === 'LOGGING') {
     const deficitMinutes = (targetSeconds - seconds) / 60;
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in slide-in-from-bottom-8 duration-500 overflow-y-auto">
-        <div className="w-full bg-zinc-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl">
+        <div className="w-full glass-strong border-white/10 p-8 rounded-2xl shadow-glass-lg backdrop-blur-xl">
           <h2 className="text-xl font-bold mb-8 text-zinc-200 font-mono border-b border-white/5 pb-4 tracking-wider flex items-center justify-between">
             <span>SESSION LOG</span>
             <span className="text-[10px] text-zinc-500 uppercase">Saving to Local Node</span>
@@ -387,11 +387,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
               <div className="flex items-baseline gap-3">
                 <div className="text-4xl font-mono text-white">{formatTime(seconds)}</div>
                 {seconds < targetSeconds ? (
-                   <div className="text-xs text-red-400 font-mono flex items-center gap-1 bg-red-950/30 px-2 py-1 rounded">
+                   <div className="text-xs text-red-400 font-mono flex items-center gap-1 glass-subtle bg-red-950/30 border-red-500/20 px-3 py-1.5 rounded-lg">
                       <ShieldAlert size={12} /> DEFICIT ({deficitMinutes.toFixed(2)}m)
                    </div>
                 ) : (
-                   <div className="text-xs text-emerald-400 font-mono flex items-center gap-1 bg-emerald-950/30 px-2 py-1 rounded">
+                   <div className="text-xs text-emerald-400 font-mono flex items-center gap-1 glass-subtle bg-emerald-950/30 border-emerald-500/20 px-3 py-1.5 rounded-lg">
                       <Zap size={12} /> SURPLUS (+{Math.abs(deficitMinutes).toFixed(2)}m)
                    </div>
                 )}
@@ -416,14 +416,14 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
                 }}
                 min="0"
                 max="50"
-                className="w-full bg-black/40 border border-white/10 text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-colors"
+                className="w-full glass-subtle text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-all"
                 autoFocus
               />
             </div>
 
             {/* THE STREAM RECEIPT - Enhanced with glass styling */}
             {mentalNotes.length > 0 && (
-              <div className="glass-subtle border-cyan-500/20 rounded-xl p-4 backdrop-blur-sm animate-scale-in">
+              <div className="glass-subtle border-cyan-500/20 rounded-xl p-4 backdrop-blur-sm animate-scale-in shadow-glass">
                  <label className="block text-[10px] uppercase tracking-widest text-cyan-500/70 mb-3 font-mono flex items-center gap-2">
                    <Brain size={12} /> The Stream (Receipt)
                  </label>
@@ -444,19 +444,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="What was the friction? What was the insight?"
-                className="w-full bg-black/40 border border-white/10 text-zinc-300 p-4 font-mono text-sm h-32 resize-none focus:border-white/30 outline-none rounded-lg transition-colors"
+                className="w-full glass-subtle text-zinc-300 p-4 font-mono text-sm h-32 resize-none focus:border-white/30 outline-none rounded-lg transition-all"
               />
             </div>
 
             <div className="pt-4 flex gap-4">
                {seconds <= 600 ? (
-                 <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 border border-white/10 text-zinc-400 font-bold hover:bg-white/5 uppercase text-xs tracking-widest rounded-lg">Discard</button>
+                 <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 glass-subtle border-white/10 text-zinc-400 font-bold hover:bg-white/5 hover:border-white/20 uppercase text-xs tracking-widest rounded-lg transition-all active:scale-95">Discard</button>
                ) : (
-                 <div className="flex-1 py-4 border border-zinc-800 text-zinc-700 font-bold uppercase text-xs tracking-widest rounded-lg text-center cursor-not-allowed" title="Cannot discard sessions longer than 10 minutes">
+                 <div className="flex-1 py-4 glass-subtle border-zinc-800 text-zinc-700 font-bold uppercase text-xs tracking-widest rounded-lg text-center cursor-not-allowed" title="Cannot discard sessions longer than 10 minutes">
                    Discard Locked
                  </div>
                )}
-               <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 uppercase text-xs tracking-widest flex items-center justify-center gap-2 rounded-lg shadow-lg shadow-white/10">
+               <button onClick={handleSave} disabled={isSubmitting} className="flex-1 py-4 bg-white text-black font-bold hover:bg-zinc-200 uppercase text-xs tracking-widest flex items-center justify-center gap-2 rounded-lg shadow-lg shadow-white/10 transition-all active:scale-95">
                  <Save size={16} /> {isSubmitting ? 'Minting...' : 'Log Asset'}
                </button>
             </div>
@@ -501,10 +501,14 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         </div>
       </div>
 
-      {/* Progress Line */}
-      <div className="w-full max-w-md h-px bg-zinc-800 mb-16 relative">
+      {/* Progress Line - Enhanced with depth */}
+      <div className="w-full max-w-md h-1 bg-zinc-900/50 mb-16 relative rounded-full overflow-hidden backdrop-blur-sm border border-zinc-800/50">
         <div 
-          className={`absolute top-0 left-0 h-full transition-all duration-1000 ${isOvertime ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'}`} 
+          className={`absolute top-0 left-0 h-full transition-all duration-1000 rounded-full ${
+            isOvertime 
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)]' 
+              : 'bg-gradient-to-r from-white to-zinc-300 shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+          }`} 
           style={{ width: `${progressPercent}%` }} 
         />
       </div>
@@ -513,19 +517,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
       <div className="flex items-center gap-6 sm:gap-12 mt-8">
         
         {/* LEFT: STOP (The Brake) */}
-        <button onClick={handleStopClick} className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+        <button onClick={handleStopClick} className={`glass-subtle w-16 h-16 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-md active:scale-95 ${
             stopConfirm 
             ? 'border-red-500 bg-red-950/30 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.2)]' 
-            : 'border-zinc-800 text-zinc-600 hover:bg-red-950/10 hover:border-red-900/50 hover:text-red-900'
+            : 'border-zinc-800 text-zinc-600 hover:bg-red-950/10 hover:border-red-900/50 hover:text-red-900 hover:shadow-glass'
         }`}>
           {stopConfirm ? <span className="text-[10px] font-bold uppercase tracking-widest">End</span> : <Square size={20} fill="currentColor" />}
         </button>
 
         {/* CENTER: PLAY/PAUSE (The Engine) */}
-        <button onClick={togglePause} className={`w-24 h-24 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-sm ${
+        <button onClick={togglePause} className={`glass w-24 h-24 rounded-full flex items-center justify-center border transition-all duration-300 backdrop-blur-lg active:scale-95 ${
             isActive 
-            ? 'border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300' 
-            : 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.15)]'
+            ? 'border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 hover:shadow-glass' 
+            : 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:shadow-[0_0_40px_rgba(16,185,129,0.25)]'
         }`}>
           {isActive ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
         </button>
@@ -533,7 +537,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
         {/* RIGHT: NOTE (The Stream) */}
         <button 
            onClick={() => setShowStreamInput(true)} 
-           className="group w-16 h-16 rounded-full flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-950/10 transition-all duration-300 backdrop-blur-sm" 
+           className="glass-subtle group w-16 h-16 rounded-full flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-950/10 transition-all duration-300 backdrop-blur-md hover:shadow-glass active:scale-95" 
            title="Capture Thought (N)"
         >
           <Brain size={20} className="group-hover:scale-110 transition-transform" />
