@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Trash2, AlertTriangle, X } from 'lucide-react';
 import { Session } from '../types';
 import { format } from 'date-fns';
+import { useFocusTrap } from '../utils/focusTrap';
 
 interface SessionDeleteDialogProps {
   session: Session;
@@ -10,6 +11,11 @@ interface SessionDeleteDialogProps {
 }
 
 export const SessionDeleteDialog: React.FC<SessionDeleteDialogProps> = ({ session, onConfirm, onClose }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Focus trap for accessibility
+  useFocusTrap(modalRef, true);
+  
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -45,32 +51,37 @@ export const SessionDeleteDialog: React.FC<SessionDeleteDialogProps> = ({ sessio
     <div
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-lg flex items-center justify-center p-4 animate-fade-in"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-session-title"
+      aria-describedby="delete-session-description"
     >
       <div
+        ref={modalRef}
         className="w-full max-w-md glass-strong border-red-500/30 shadow-glass-lg animate-scale-in rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-red-500/30 bg-red-950/10">
           <div className="flex items-center gap-3">
-            <div className="p-2 glass-subtle border-red-500/30 rounded-lg">
-              <AlertTriangle size={20} className="text-red-400" />
+            <div className="p-2 glass-subtle border-red-500/30 rounded-lg" aria-hidden="true">
+              <AlertTriangle size={20} className="text-red-400" aria-hidden="true" />
             </div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-red-400 font-mono">
+            <h2 id="delete-session-title" className="text-sm font-bold uppercase tracking-widest text-red-400 font-mono">
               Delete Session
             </h2>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close dialog"
-            className="text-zinc-500 hover:text-white transition-colors"
+            aria-label="Close delete session dialog"
+            className="text-zinc-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 rounded"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
           <div className="space-y-3">
-            <p className="text-zinc-300 text-sm font-mono">
+            <p id="delete-session-description" className="text-zinc-300 text-sm font-mono">
               Are you sure you want to delete this session?
             </p>
             
@@ -113,16 +124,18 @@ export const SessionDeleteDialog: React.FC<SessionDeleteDialogProps> = ({ sessio
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 glass-subtle px-6 py-3 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 rounded-lg transition-all uppercase text-xs tracking-widest font-mono"
+              aria-label="Cancel deletion"
+              className="flex-1 glass-subtle px-6 py-3 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 rounded-lg transition-all uppercase text-xs tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-white/20"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex-1 bg-red-600 hover:bg-red-500 px-6 py-3 text-white rounded-lg transition-all uppercase text-xs tracking-widest font-mono flex items-center justify-center gap-2 shadow-lg"
+              aria-label="Confirm delete session"
+              className="flex-1 bg-red-600 hover:bg-red-500 px-6 py-3 text-white rounded-lg transition-all uppercase text-xs tracking-widest font-mono flex items-center justify-center gap-2 shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400"
             >
-              <Trash2 size={14} />
+              <Trash2 size={14} aria-hidden="true" />
               Delete
             </button>
           </div>
