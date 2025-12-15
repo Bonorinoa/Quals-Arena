@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { User, LogIn, LogOut, AlertCircle, Loader2, X } from 'lucide-react';
 import { useAuth, AuthErrorType } from '../services/AuthContext';
+import { useFocusTrap } from '../utils/focusTrap';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -10,6 +11,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const { user, signIn, signOut, error, errorType } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Focus trap for accessibility
+  useFocusTrap(modalRef, true);
 
   const handleSignIn = async () => {
     setIsLoading(true);
@@ -49,22 +54,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const showError = errorMessage && errorType !== AuthErrorType.POPUP_CLOSED;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl animate-scale-in">
+    <div 
+      className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+    >
+      <div 
+        ref={modalRef}
+        className="w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl animate-scale-in"
+      >
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
-            <User className="text-zinc-400" size={20} />
+          <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center" aria-hidden="true">
+            <User className="text-zinc-400" size={20} aria-hidden="true" />
           </div>
-          <h2 className="text-xl font-bold text-white">
+          <h2 id="auth-modal-title" className="text-xl font-bold text-white">
             {user ? 'Account' : 'Sign In'}
           </h2>
+          <button
+            onClick={onClose}
+            aria-label="Close auth modal"
+            className="ml-auto text-zinc-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/20"
+          >
+            <X size={20} aria-hidden="true" />
+          </button>
         </div>
 
         {/* Error Message */}
         {showError && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-            <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={18} />
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3" role="alert" aria-live="assertive">
+            <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={18} aria-hidden="true" />
             <p className="text-sm text-red-400 flex-1">{errorMessage}</p>
           </div>
         )}
