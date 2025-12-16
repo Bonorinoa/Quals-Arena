@@ -1,6 +1,11 @@
 
 # highBeta - The High Patience Protocol
 
+![Version](https://img.shields.io/badge/version-4.0.0-emerald)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Tests](https://img.shields.io/badge/tests-173%20passing-success)
+![Accessibility](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-blue)
+
 **Subject:** D1 Economist-Entrepreneur (Ph.D. Candidate)  
 **Objective:** Habit Reformation & High-Performance Sober Productivity  
 **Methodology:** Mechanism Design, Behavioral Economics, Principal-Agent Theory
@@ -10,6 +15,21 @@
 highBeta (β) is a minimal viable web application designed to solve the **Principal-Agent Problem** within the self. The name symbolizes the discount factor in economic theory—high beta represents high patience, which leads to better lifestyle choices and long-term thinking. It aligns the incentives of the "Planner" (the forward-looking self who wants to pass exams) with the "Doer" (the present self who craves cheap dopamine) using strict commitment devices and high-visibility metrics.
 
 This is not a to-do list. It is a **Performance Analytics Dashboard** for a CEO tracking their most valuable asset: cognitive capacity.
+
+## What's New in v4.0
+
+highBeta v4.0 represents the first official **MVP release** with production-ready features for serious productivity tracking:
+
+- 🔐 **Firebase Authentication**: Sign in with Google for automatic cloud backup and multi-device access
+- ☁️ **Real-time Cloud Sync**: Your sessions and settings follow you across all devices, with offline-first architecture
+- ✏️ **Session Edit/Delete**: Fix mistakes, remove test sessions, and maintain data integrity with validation
+- ⌨️ **Keyboard Shortcuts**: Navigate faster with power user hotkeys (?, E, D, S, Escape)
+- 📱 **PWA Support**: Install as a native-like app on any device, works fully offline
+- ♿ **Accessibility**: Full keyboard navigation, screen reader support, WCAG 2.1 AA compliant (96% Lighthouse score)
+- 🛡️ **Anti-Gaming Mechanisms**: Fair surplus caps (50% of commitment) prevent system exploitation and maintain protocol integrity
+- 📊 **Enhanced Analytics**: Commitment pattern analysis, weekly budget balance, and behavioral nudges
+
+**Production Ready**: 173 automated tests (100% passing), comprehensive E2E testing (95% pass rate), and security-hardened Firebase rules ensure reliability.
 
 ## The Scientific Principles
 
@@ -24,19 +44,56 @@ This is not a to-do list. It is a **Performance Analytics Dashboard** for a CEO 
 *   **Commitment Device:** Users must sign a "Contract" (select a duration) before starting.
 *   **Drift-Proof Timer:** Uses delta-time calculation to remain accurate even if the browser tab is backgrounded or the phone sleeps.
 *   **Wake Lock:** Keeps the screen awake during sessions, turning the device into a dedicated physical scoreboard.
-*   **Noble Insights:** Randomly samples protocol axioms (e.g., "Lag is Ponzi Finance") to reinforce motivation.
+*   **Mental Notes (The Stream):** Press 'N' during sessions to capture stream-of-consciousness insights with automatic timestamps.
 *   **Warm-Up Protocol:** Optional 1-5 minute "Ramp Up" timer to settle cognitive noise before the clock starts.
 *   **Safety Latch:** Prevents accidental data loss via browser refresh protections.
 
 ### 2. The Scoreboard (Analytics)
-*   **Net Position (Time Budget):** Tracks "Actual vs. Committed" time.
+*   **Net Position (Time Budget):** Tracks "Actual vs. Committed" time with weekly budget balance.
     *   *Red:* Deficit (Debt owed to the system).
-    *   *Green:* Surplus (Alpha generated).
-*   **Consistency Grid (Heatmap):** A GitHub-style contribution graph visualizing the last 60 days of intensity.
+    *   *Green:* Surplus (Alpha generated, capped at 50% of commitment).
+*   **Consistency Grid (Heatmap):** A GitHub-style contribution graph visualizing the current month's intensity.
+*   **Performance Chart:** 7-day bar chart with baseline reference and delta indicators.
 *   **Signal Integrity:** Tracks the substance-free streak.
 *   **Sober Efficiency Rate (SER):** Calculates Reps / Hour to measure true output velocity.
+*   **Commitment Pattern Analysis:** Behavioral nudges detect gaming patterns and encourage authentic pre-commitments.
 
-### 3. Data Sovereignty
+### 3. Session Management (v4.0)
+*   **Edit Sessions:** Modify duration, reps, notes, and dates with real-time validation.
+*   **Delete Sessions:** Safe deletion with confirmation dialogs to prevent accidental data loss.
+*   **Metrics Recalculation:** Budget balance and analytics automatically update after edits/deletes.
+*   **Cloud Sync:** All changes sync to Firebase when logged in for multi-device consistency.
+
+### 4. Firebase Cloud Sync (v4.0)
+*   **Automatic Backup:** All sessions sync to cloud immediately after completion.
+*   **Multi-Device Access:** Sign in with Google on any device and access your complete session history.
+*   **Offline-First:** App works fully offline; syncs automatically when connection restored.
+*   **Error Recovery:** Sync failures don't break the app; retry button available.
+*   **Secure:** Each user's data is isolated with Firestore security rules enforced.
+*   **Conflict Resolution:** Last-write-wins strategy for concurrent edits across devices.
+
+### 5. Keyboard Shortcuts & PWA (v4.0)
+*   **Power User Navigation:**
+    *   `?` - Show keyboard shortcuts help
+    *   `E` - Enter Arena (start new session)
+    *   `D` - Go to Dashboard
+    *   `S` - Go to Settings
+    *   `Escape` - Close modals
+*   **Progressive Web App:**
+    *   Installable as standalone app on desktop and mobile
+    *   Add to Home Screen support (iOS/Android)
+    *   Offline-first with service worker caching
+    *   Native app-like experience without app store
+
+### 6. Accessibility & Anti-Gaming (v4.0)
+*   **WCAG 2.1 AA Compliant:** Full keyboard navigation, screen reader support, color contrast compliance.
+*   **Lighthouse Score:** 96% accessibility, 94% performance, 92% best practices.
+*   **Proportional Surplus Cap:** Prevents gaming via systematic under-commitment (50% cap on surplus).
+*   **Commitment Pattern Alerts:** Non-punitive warnings when low commitment patterns detected.
+*   **Focus Traps:** All modals properly trap focus for keyboard users.
+*   **Skip Links:** Skip-to-content link visible on Tab for screen reader users.
+
+### 7. Data Sovereignty
 *   **Local First:** All data lives in your browser's `LocalStorage`. No login required.
 *   **CSV Export:** Download your raw data anytime.
 *   **Cloud Backup:** Optional Firebase integration for automatic cloud sync and multi-device access.
@@ -163,34 +220,39 @@ Firebase provides automatic cloud backup and cross-device sync for your sessions
 
 ## Current Limitations
 
-*   **Browser Dependency:** If you clear your browser cache/history, local data is lost (unless Firebase Cloud Sync is enabled).
+*   **Browser Dependency:** If you clear your browser cache/history while not using Firebase Cloud Sync, local data is lost. **Solution:** Enable Firebase Cloud Sync for automatic backup.
 *   **Mobile Backgrounding:** While the timer logic is accurate, strict iOS battery saving might freeze the visual countdown until you re-open the app. The "Time Logged" will still be correct.
-*   **No "Social" Features:** This is a single-player game. You vs. You.
-*   **Sync Conflicts:** If you edit the same session on multiple devices simultaneously, last-write-wins (newest timestamp is kept).
+*   **No "Social" Features:** This is a single-player game. You vs. You. No leaderboards, sharing, or social comparison features (by design).
+*   **Sync Conflicts:** If you edit the same session on multiple devices simultaneously, last-write-wins (newest timestamp is kept). Consider this when making edits across devices.
+*   **Browser Compatibility:** Safari 15.x has minor keyboard event handling differences (Escape key to close modals). Works correctly in Safari 16+, Chrome, Firefox, and Edge.
+*   **Future Session Dates:** Currently no validation prevents editing session dates to future dates. Use responsibly to maintain data integrity.
 
 ## Firebase Cloud Sync
 
 The app now supports **optional** Firebase cloud sync for automatic backup and multi-device access:
 
 ### Features
-- ✅ **Automatic Backup**: All sessions sync to cloud immediately after completion
-- ✅ **Multi-Device Access**: Sign in on any device and access your data
+- ✅ **Automatic Backup**: All sessions and settings sync to cloud immediately after completion
+- ✅ **Multi-Device Access**: Sign in with Google on any device and access your data
 - ✅ **Offline Support**: App works fully offline; syncs when connection restored
 - ✅ **Error Recovery**: Sync failures don't break the app; retry button available
 - ✅ **Secure**: Each user's data is isolated; Firestore security rules enforced
+- ✅ **Session Management**: Edit and delete sessions with automatic cloud sync
+- ✅ **Conflict Resolution**: Last-write-wins strategy for concurrent device edits
 
 ### How It Works
-1. **Local-First**: Data always saves to browser localStorage first
+1. **Local-First**: Data always saves to browser localStorage first (instant, works offline)
 2. **Optional Sync**: Sign in with Google to enable cloud backup
 3. **Automatic Merge**: First sign-in merges local and cloud data intelligently
 4. **Real-Time Status**: Visual indicator shows sync progress (idle, syncing, synced, error)
-5. **Graceful Degradation**: If sync fails, data remains safe locally
+5. **Graceful Degradation**: If sync fails, data remains safe locally with retry option
 
 ### Setup
 See "Option 2: Firebase Cloud Sync Setup" in the Deployment section above.
 
 For detailed technical documentation, architecture diagrams, and troubleshooting:
 - **[Firebase Sync Architecture](./docs/FIREBASE_SYNC_ARCHITECTURE.md)** - Complete technical guide
+- **[E2E Test Results](./docs/testing/E2E_TEST_RESULTS.md)** - v4.0 testing documentation (95% pass rate)
 
 ---
 
@@ -217,6 +279,15 @@ For comprehensive documentation, see **[/docs](./docs/README.md)**
 *   **[DESIGN_SYSTEM.md](./docs/development/DESIGN_SYSTEM.md)** - UI/UX design system and guidelines
 *   **[TEST_DOCUMENTATION.md](./docs/development/TEST_DOCUMENTATION.md)** - Test suite guide and debugging tips
 *   **[V3_EVALUATION_REPORT.md](./docs/development/V3_EVALUATION_REPORT.md)** - v3.0 testing results
+
+**Testing & Quality Assurance** (`/docs/testing`):
+*   **[E2E_TEST_RESULTS.md](./docs/testing/E2E_TEST_RESULTS.md)** - v4.0 E2E test results (95% pass rate, APPROVED for release)
+*   **[E2E_TEST_CHECKLIST.md](./docs/testing/E2E_TEST_CHECKLIST.md)** - Comprehensive E2E testing checklist
+*   **[E2E_AUTOMATION_SETUP.md](./docs/testing/E2E_AUTOMATION_SETUP.md)** - Automated testing setup guide
+
+**Accessibility** (`/docs/accessibility`):
+*   **[final-report.md](./docs/accessibility/final-report.md)** - WCAG 2.1 AA compliance audit results
+*   **[implementation-summary.md](./docs/accessibility/implementation-summary.md)** - Accessibility implementation guide
 
 ---
 *"Owners build assets; employees log hours."*
