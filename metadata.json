@@ -1,6 +1,9 @@
 {
   "name": "highBeta",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "A mechanism design tool for high-performance sober productivity. High beta = high patience = better lifestyle. Tracks Deep Work, Reps, and Sober Efficiency Rate (SER).",
+  "status": "Production Ready - v4.0 Approved",
+  "deploymentApproved": true,
+  "approvalDate": "2024-12-22",
   "requestFramePermissions": []
 }
