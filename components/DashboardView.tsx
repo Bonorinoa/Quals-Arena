@@ -175,7 +175,9 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; settings: U
 };
 
 // MONTHLY CALENDAR GRID - Displays current month with proper weekday alignment and day numbers
-const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string) => void }> = ({ sessions, onDayClick }) => {
+const ConsistencyGrid: React.FC<{ sessions: Session[]; settings: UserSettings; onDayClick: (date: string) => void }> = ({ sessions, settings, onDayClick }) => {
+   const goalLabels = useMemo(() => getGoalLabels(settings), [settings]);
+   
    const calendarData = useMemo(() => {
       const today = new Date();
       const monthStart = startOfMonth(today);
@@ -217,7 +219,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
       }
       
       return { days: result, monthName: format(today, 'MMMM yyyy') };
-   }, [sessions]);
+   }, [sessions, goalLabels]);
 
    return (
       <div>
@@ -523,7 +525,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Grid size={12} /> Monthly Consistency Grid
                </div>
-               <ConsistencyGrid sessions={sessions} onDayClick={setSelectedDate} />
+               <ConsistencyGrid sessions={sessions} settings={settings} onDayClick={setSelectedDate} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
