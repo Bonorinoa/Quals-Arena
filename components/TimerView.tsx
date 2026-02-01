@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, Thermometer, Wind, Brain, Send, X } from 'lucide-react';
-import { Session, MentalNote } from '../types';
-import { getLocalDate } from '../services/storage';
+import { Session, MentalNote, PauseEvent } from '../types';
+import { getLocalDate, STORAGE_KEYS } from '../services/storage';
 import { formatTime } from '../utils/timeUtils';
 
 interface TimerViewProps {
@@ -51,6 +51,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   const [showStreamInput, setShowStreamInput] = useState(false);
   const [currentStreamNote, setCurrentStreamNote] = useState('');
   
+  // Pause tracking state
+  const [pauseEvents, setPauseEvents] = useState<PauseEvent[]>([]);
+  
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const DURATIONS = [
@@ -72,6 +75,94 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   useEffect(() => {
     setCurrentAnchor(ANCHORS[Math.floor(Math.random() * ANCHORS.length)]);
   }, []);
+
+  // Session Recovery on Mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        const timeSinceLastSave = Date.now() - parsed.lastSaved;
+        
+        // If saved state is recent (within 4 hours) and was running, offer to restore
+        if (timeSinceLastSave < 4 * 60 * 60 * 1000 && parsed.mode === 'RUNNING') {
+          const shouldRestore = window.confirm(
+            `Found an interrupted session (${Math.floor(parsed.totalElapsed / 60)} minutes). Resume?`
+          );
+          if (shouldRestore) {
+            setSeconds(parsed.totalElapsed + Math.floor(timeSinceLastSave / 1000));
+            setTargetSeconds(parsed.targetSeconds);
+            setMode('RUNNING');
+            startTimeRef.current = Date.now();
+            accumulatedTimeRef.current = parsed.totalElapsed + Math.floor(timeSinceLastSave / 1000);
+            setIsActive(true);
+            if (parsed.pauseEvents) {
+              setPauseEvents(parsed.pauseEvents);
+            }
+          } else {
+            localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
+          }
+        } else if (timeSinceLastSave >= 4 * 60 * 60 * 1000) {
+          // Clear stale state
+          localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
+        }
+      } catch (e) {
+        console.error('Failed to restore timer state:', e);
+        localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
+      }
+    }
+  }, []); // Run once on mount
+
+  // Visibility Change Handler for Background Recovery
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isActive && startTimeRef.current) {
+        // Recalculate elapsed time when app becomes visible
+        const now = Date.now();
+        const elapsedSinceStart = Math.floor((now - startTimeRef.current) / 1000);
+        const totalElapsed = accumulatedTimeRef.current + elapsedSinceStart;
+        setSeconds(totalElapsed);
+        
+        // Also restore from localStorage backup if needed
+        const savedState = localStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+        if (savedState) {
+          try {
+            const parsed = JSON.parse(savedState);
+            // Use the larger value to prevent time loss
+            if (parsed.totalElapsed > totalElapsed) {
+              setSeconds(parsed.totalElapsed);
+              accumulatedTimeRef.current = parsed.totalElapsed;
+              startTimeRef.current = now;
+            }
+          } catch (e) {
+            console.error('Failed to parse saved timer state:', e);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isActive]);
+
+  // Persist Timer State to localStorage
+  useEffect(() => {
+    if (!isActive || mode !== 'RUNNING') return;
+    
+    const saveInterval = setInterval(() => {
+      const timerState = {
+        totalElapsed: seconds,
+        targetSeconds,
+        startTime: startTimeRef.current,
+        lastSaved: Date.now(),
+        mode,
+        pauseEvents
+      };
+      localStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
+    }, 5000); // Save every 5 seconds
+    
+    return () => clearInterval(saveInterval);
+  }, [isActive, mode, seconds, targetSeconds, pauseEvents]);
 
   // Keyboard Shortcut for Mental Notes
   useEffect(() => {
@@ -188,17 +279,47 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
     startTimeRef.current = Date.now();
   };
 
+  const handleCancel = () => {
+    // Clear timer state from localStorage when cancelling
+    localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
+    onCancel();
+  };
+
   const togglePause = () => {
     if (isActive) {
       // PAUSE: Commit current delta to accumulated
       const now = Date.now();
       const delta = Math.floor((now - (startTimeRef.current || now)) / 1000);
-      accumulatedTimeRef.current += delta;
+      const totalElapsed = accumulatedTimeRef.current + delta;
+      accumulatedTimeRef.current = totalElapsed;
+      
+      // Record pause event
+      const pauseEvent: PauseEvent = {
+        pausedAt: now,
+        elapsedAtPause: totalElapsed,
+      };
+      setPauseEvents(prev => [...prev, pauseEvent]);
+      
       startTimeRef.current = null;
       setIsActive(false);
+      
+      // Log pause for debugging
+      console.log(`Paused at ${formatTime(totalElapsed)} elapsed`);
     } else {
       // RESUME: Reset start time
-      startTimeRef.current = Date.now();
+      const now = Date.now();
+      
+      // Update the last pause event with resume time
+      setPauseEvents(prev => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        const lastPause = updated[updated.length - 1];
+        lastPause.resumedAt = now;
+        lastPause.pauseDuration = Math.floor((now - lastPause.pausedAt) / 1000);
+        return updated;
+      });
+      
+      startTimeRef.current = now;
       setIsActive(true);
       setStopConfirm(false);
     }
@@ -240,6 +361,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
        finalDuration = accumulatedTimeRef.current + Math.floor((now - startTimeRef.current) / 1000);
     }
 
+    // Calculate total pause time
+    const totalPauseTime = pauseEvents.reduce((acc, event) => {
+      return acc + (event.pauseDuration || 0);
+    }, 0);
+
     const session: Session = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now() - (finalDuration * 1000),
@@ -248,8 +374,14 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
       reps: reps,
       notes: notes,
       mentalNotes: mentalNotes, // Save the structured array
-      date: getLocalDate()
+      date: getLocalDate(),
+      pauseEvents: pauseEvents,
+      totalPauseTime: totalPauseTime,
+      pauseCount: pauseEvents.length,
     };
+    
+    // Clear timer state from localStorage
+    localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
     
     onSessionComplete(session);
   };
@@ -281,7 +413,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
             ))}
          </div>
 
-         <button onClick={onCancel} className="mt-16 glass-subtle px-6 py-3 rounded-full border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-all backdrop-blur-sm">
+         <button onClick={handleCancel} className="mt-16 glass-subtle px-6 py-3 rounded-full border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700 text-xs uppercase tracking-widest font-mono flex items-center gap-2 transition-all backdrop-blur-sm">
             <ArrowLeft size={14} /> Abort Protocol
          </button>
        </div>
@@ -421,6 +553,27 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
               />
             </div>
 
+            {/* PAUSE STATS DISPLAY */}
+            {pauseEvents.length > 0 && (
+              <div className="glass-subtle p-4 rounded-lg border-amber-500/20 backdrop-blur-sm animate-scale-in shadow-glass">
+                <div className="text-xs uppercase tracking-widest text-amber-500/70 mb-2 font-mono">
+                  Session Flow
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div>
+                    <span className="text-zinc-400">Pauses:</span>{' '}
+                    <span className="text-white font-mono">{pauseEvents.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400">Total Pause Time:</span>{' '}
+                    <span className="text-white font-mono">
+                      {formatTime(pauseEvents.reduce((acc, e) => acc + (e.pauseDuration || 0), 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* THE STREAM RECEIPT - Enhanced with glass styling */}
             {mentalNotes.length > 0 && (
               <div className="glass-subtle border-cyan-500/20 rounded-xl p-4 backdrop-blur-sm animate-scale-in shadow-glass">
@@ -450,7 +603,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
 
             <div className="pt-4 flex gap-4">
                {seconds <= 600 ? (
-                 <button onClick={onCancel} disabled={isSubmitting} className="flex-1 py-4 glass-subtle border-white/10 text-zinc-400 font-bold hover:bg-white/5 hover:border-white/20 uppercase text-xs tracking-widest rounded-lg transition-all active:scale-95">Discard</button>
+                 <button onClick={handleCancel} disabled={isSubmitting} className="flex-1 py-4 glass-subtle border-white/10 text-zinc-400 font-bold hover:bg-white/5 hover:border-white/20 uppercase text-xs tracking-widest rounded-lg transition-all active:scale-95">Discard</button>
                ) : (
                  <div className="flex-1 py-4 glass-subtle border-zinc-800 text-zinc-700 font-bold uppercase text-xs tracking-widest rounded-lg text-center cursor-not-allowed" title="Cannot discard sessions longer than 10 minutes">
                    Discard Locked
