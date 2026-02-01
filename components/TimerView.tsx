@@ -512,8 +512,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   // ----------------------------------------------------------------------
   if (mode === 'LOGGING') {
     const deficitMinutes = (targetSeconds - seconds) / 60;
-    const goalLabels = getGoalLabels(storage.getSettings());
     const settings = storage.getSettings();
+    const goalLabels = getGoalLabels(settings);
     
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in slide-in-from-bottom-8 duration-500 overflow-y-auto">

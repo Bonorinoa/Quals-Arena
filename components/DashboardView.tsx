@@ -514,7 +514,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-               <Card className="glass border-zinc-800"><DeltaIndicator label="Daily Alpha" current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
+               <Card className="glass border-zinc-800"><DeltaIndicator label={`Daily Alpha (${goalLabels.name})`} current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
                <Card className="glass border-zinc-800">
                  <DeltaIndicator label="Sober Efficiency (SER)" current={stats.today.ser} previous={Number(stats.globalSER)} />
                  {stats.today.ser === "NOISE" && <div className="text-[10px] text-zinc-600 font-mono mt-2 flex items-center gap-1"><Activity size={10} /> Log &gt; 5 mins</div>}
@@ -676,7 +676,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                        <th className="py-2 pr-4">Duration</th>
                        <th className="py-2 pr-4">Contract</th>
                        <th className="py-2 pr-4 text-right">Net</th>
-                       <th className="py-2 px-4 text-right">Volume</th>
+                       <th className="py-2 px-4 text-right">{goalLabels.name}</th>
                        <th className="py-2 pl-4 text-right">Actions</th>
                      </tr>
                    </thead>
