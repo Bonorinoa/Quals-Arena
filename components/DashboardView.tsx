@@ -20,6 +20,7 @@ import { getYesterdayDate, dateToLocalString } from '../utils/dateUtils';
 import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DURATION_THRESHOLD_SECONDS, getWeeklyBudgetBalance, analyzeCommitmentPatterns, getSessionBudgetBalance, MAX_SURPLUS_RATIO } from '../utils/sessionUtils';
 import { SessionEditModal } from './SessionEditModal';
 import { SessionDeleteDialog } from './SessionDeleteDialog';
+import { getGoalLabels, formatGoalCount } from '../utils/goalUtils';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -88,12 +89,13 @@ const DeltaIndicator: React.FC<{ current: number | string; previous: number | st
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
 
 // Daily Stats Modal
-const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: () => void }> = ({ date, sessions, onClose }) => {
+const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; settings: UserSettings; onClose: () => void }> = ({ date, sessions, settings, onClose }) => {
    const daySessions = getSessionsByDate(sessions, date);
    const totalDuration = getTotalDuration(daySessions);
    const totalReps = getTotalReps(daySessions);
    const ser = calculateSER(totalReps, totalDuration, MIN_DURATION_THRESHOLD_SECONDS);
    const formattedDate = format(parseISO(date), 'EEEE, MMMM d, yyyy');
+   const goalLabels = getGoalLabels(settings);
 
    // Handle keyboard navigation
    const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -130,7 +132,7 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
                      <div className="text-xl text-white font-mono font-bold">{formatTimeFull(totalDuration)}</div>
                   </div>
                   <div>
-                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">Reps</div>
+                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mb-1">{goalLabels.name}</div>
                      <div className="text-xl text-ember-500 font-mono font-bold">{totalReps}</div>
                   </div>
                   <div>
@@ -149,7 +151,7 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; onClose: ()
                            <div key={session.id} className="glass-subtle border-zinc-800 p-3 rounded elevated">
                               <div className="flex justify-between items-start mb-2">
                                  <div className="text-sm text-white font-mono">{(session.durationSeconds / 60).toFixed(0)}m</div>
-                                 <div className="text-sm text-ember-500 font-mono font-bold">{session.reps} reps</div>
+                                 <div className="text-sm text-ember-500 font-mono font-bold">{session.reps} {session.reps === 1 ? goalLabels.singular : goalLabels.plural}</div>
                               </div>
                               {session.notes && (
                                  <div className="text-xs text-zinc-500 font-mono mt-2 border-t border-zinc-800 pt-2">{session.notes}</div>
@@ -228,7 +230,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
             {calendarData.days.map((d, idx) => (
                <div 
                   key={`${d.date}-${idx}`}
-                  title={d.isEmpty ? '' : `${d.date}: ${d.reps} reps`}
+                  title={d.isEmpty ? '' : `${d.date}: ${d.reps} ${d.reps === 1 ? goalLabels.singular : goalLabels.plural}`}
                   onClick={() => !d.isEmpty && onDayClick(d.date)}
                   onKeyDown={(e) => {
                      if (!d.isEmpty && (e.key === 'Enter' || e.key === ' ')) {
@@ -258,6 +260,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [deletingSession, setDeletingSession] = useState<Session | null>(null);
+  
+  const goalLabels = useMemo(() => getGoalLabels(settings), [settings]);
   
   // -- Metrics Calculation --
   const stats = useMemo(() => {
@@ -510,7 +514,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-               <Card className="glass border-zinc-800"><DeltaIndicator label="Daily Alpha (Reps)" current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
+               <Card className="glass border-zinc-800"><DeltaIndicator label={`Daily Alpha (${goalLabels.name})`} current={stats.today.reps} previous={stats.yesterday.reps} /></Card>
                <Card className="glass border-zinc-800">
                  <DeltaIndicator label="Sober Efficiency (SER)" current={stats.today.ser} previous={Number(stats.globalSER)} />
                  {stats.today.ser === "NOISE" && <div className="text-[10px] text-zinc-600 font-mono mt-2 flex items-center gap-1"><Activity size={10} /> Log &gt; 5 mins</div>}
@@ -656,7 +660,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                  {targetMet ? <ShieldCheck size={16} className="text-emerald-500" /> : <AlertOctagon size={16} className="text-zinc-500" />}
                  {targetMet ? <span className="text-emerald-500">FOUNDER MODE UNLOCKED</span> : <span className="text-zinc-500">EMPLOYEE MODE</span>}
                </h3>
-               <p className="text-xs text-zinc-400 font-mono">{targetMet ? "Weekly Variance Positive. Chaos Authorized." : `Target Deficit: ${settings.weeklyRepTarget - stats.weeklyReps} Reps.`}</p>
+               <p className="text-xs text-zinc-400 font-mono">{targetMet ? "Weekly Variance Positive. Chaos Authorized." : `Target Deficit: ${settings.weeklyRepTarget - stats.weeklyReps} ${goalLabels.plural}.`}</p>
             </div>
 
             {/* SESSION LEDGER */}
@@ -672,7 +676,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                        <th className="py-2 pr-4">Duration</th>
                        <th className="py-2 pr-4">Contract</th>
                        <th className="py-2 pr-4 text-right">Net</th>
-                       <th className="py-2 px-4 text-right">Reps</th>
+                       <th className="py-2 px-4 text-right">{goalLabels.name}</th>
                        <th className="py-2 pl-4 text-right">Actions</th>
                      </tr>
                    </thead>
@@ -753,10 +757,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
 
       {/* Daily Stats Modal */}
       {selectedDate && (
-        <DailyStatsModal 
-          date={selectedDate} 
-          sessions={sessions} 
-          onClose={() => setSelectedDate(null)} 
+        <DailyStatsModal
+          date={selectedDate}
+          sessions={sessions}
+          settings={settings}
+          onClose={() => setSelectedDate(null)}
         />
       )}
 

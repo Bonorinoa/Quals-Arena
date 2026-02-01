@@ -4,6 +4,8 @@ import { Play, Pause, Square, Save, ArrowLeft, Target, ShieldAlert, Quote, Zap, 
 import { Session, MentalNote, PauseEvent } from '../types';
 import { getLocalDate, STORAGE_KEYS } from '../services/storage';
 import { formatTime } from '../utils/timeUtils';
+import * as storage from '../services/storage';
+import { getGoalLabels } from '../utils/goalUtils';
 
 interface TimerViewProps {
   onSessionComplete: (session: Session) => void;
@@ -366,6 +368,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
       return acc + (event.pauseDuration || 0);
     }, 0);
 
+    const settings = storage.getSettings();
+
     const session: Session = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now() - (finalDuration * 1000),
@@ -378,6 +382,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
       pauseEvents: pauseEvents,
       totalPauseTime: totalPauseTime,
       pauseCount: pauseEvents.length,
+      goalCategoryId: settings.goalCategoryId,
+      sessionGoalTarget: settings.defaultSessionGoal,
     };
     
     // Clear timer state from localStorage
@@ -506,6 +512,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
   // ----------------------------------------------------------------------
   if (mode === 'LOGGING') {
     const deficitMinutes = (targetSeconds - seconds) / 60;
+    const settings = storage.getSettings();
+    const goalLabels = getGoalLabels(settings);
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto p-4 animate-in slide-in-from-bottom-8 duration-500 overflow-y-auto">
         <div className="w-full glass-strong border-white/10 p-8 rounded-2xl shadow-glass-lg backdrop-blur-xl">
@@ -531,26 +540,44 @@ export const TimerView: React.FC<TimerViewProps> = ({ onSessionComplete, onCance
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">Reps (Volume)</label>
-              <input
-                type="number"
-                value={reps}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '') {
-                    setReps(0);
-                  } else {
-                    const numValue = parseInt(value);
-                    if (!isNaN(numValue)) {
-                      setReps(Math.max(0, Math.min(50, numValue)));
+              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-mono">
+                {goalLabels.name} ({goalLabels.plural.charAt(0).toUpperCase() + goalLabels.plural.slice(1)})
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={reps}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      setReps(0);
+                    } else {
+                      const numValue = parseInt(value);
+                      if (!isNaN(numValue)) {
+                        setReps(Math.max(0, Math.min(50, numValue)));
+                      }
                     }
-                  }
-                }}
-                min="0"
-                max="50"
-                className="w-full glass-subtle text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-all"
-                autoFocus
-              />
+                  }}
+                  min="0"
+                  max="50"
+                  className="w-full glass-subtle text-white p-4 text-2xl font-mono focus:border-white/30 outline-none rounded-lg transition-all"
+                  autoFocus
+                />
+                <span className="text-zinc-500 font-mono text-sm whitespace-nowrap">
+                  {reps === 1 ? goalLabels.singular : goalLabels.plural}
+                </span>
+              </div>
+              {settings.defaultSessionGoal && (
+                <div className="mt-2 flex items-center gap-2 text-xs font-mono">
+                  <span className="text-zinc-500">Target:</span>
+                  <span className={reps >= settings.defaultSessionGoal ? 'text-emerald-400' : 'text-zinc-400'}>
+                    {settings.defaultSessionGoal} {settings.defaultSessionGoal === 1 ? goalLabels.singular : goalLabels.plural}
+                  </span>
+                  {reps >= settings.defaultSessionGoal && (
+                    <span className="text-emerald-400">✓</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* PAUSE STATS DISPLAY */}
