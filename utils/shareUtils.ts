@@ -157,12 +157,15 @@ export const generateSessionShareCard = async (
     const lineHeight = 40;
     let lineCount = 0;
     const maxLines = 3;
+    let isFirstLine = true;
     
     for (const word of words) {
       const testLine = line + word + ' ';
       const metrics = ctx.measureText(testLine);
       if (metrics.width > maxWidth && line !== '') {
-        ctx.fillText(`"${line.trim()}"`, 140, y);
+        const prefix = isFirstLine ? '"' : '';
+        ctx.fillText(prefix + line.trim(), 140, y);
+        isFirstLine = false;
         line = word + ' ';
         y += lineHeight;
         lineCount++;
@@ -175,7 +178,8 @@ export const generateSessionShareCard = async (
       }
     }
     if (lineCount < maxLines && line.trim()) {
-      ctx.fillText(`"${line.trim()}"`, 140, y);
+      const prefix = isFirstLine ? '"' : '';
+      ctx.fillText(prefix + line.trim() + '"', 140, y);
     }
     ctx.textAlign = 'center';
   }
@@ -381,9 +385,19 @@ export const shareOrDownload = async (
   title: string
 ): Promise<'shared' | 'downloaded'> => {
   // Convert canvas to blob
-  const blob = await new Promise<Blob>((resolve) => {
-    canvas.toBlob((b) => resolve(b!), 'image/png', 1.0);
+  const blob = await new Promise<Blob | null>((resolve, reject) => {
+    try {
+      canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+    } catch (error) {
+      reject(error);
+    }
   });
+  
+  if (!blob) {
+    // Fallback to download if blob creation failed
+    downloadCanvasAsPNG(canvas, filename);
+    return 'downloaded';
+  }
   
   // Try Web Share API first
   if (navigator.share && navigator.canShare) {
