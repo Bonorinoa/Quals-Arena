@@ -11,6 +11,56 @@ export interface PauseEvent {
   pauseDuration?: number; // Calculated duration of pause in seconds
 }
 
+// Pre-defined goal categories
+export type GoalCategoryId = 'problems' | 'tasks' | 'pomodoros' | 'pages' | 'custom';
+
+export interface GoalCategory {
+  id: GoalCategoryId;
+  name: string;           // Display name (e.g., "Problems Solved")
+  unit: string;           // Singular unit (e.g., "problem")
+  unitPlural: string;     // Plural unit (e.g., "problems")
+  icon?: string;          // Optional icon identifier
+  description: string;    // Help text
+}
+
+export const DEFAULT_GOAL_CATEGORIES: GoalCategory[] = [
+  {
+    id: 'problems',
+    name: 'Problems Solved',
+    unit: 'problem',
+    unitPlural: 'problems',
+    description: 'Track exercises, problem sets, or practice questions completed'
+  },
+  {
+    id: 'tasks',
+    name: 'Tasks Completed',
+    unit: 'task',
+    unitPlural: 'tasks',
+    description: 'Track to-do items or work tasks finished'
+  },
+  {
+    id: 'pomodoros',
+    name: 'Pomodoro Cycles',
+    unit: 'pomodoro',
+    unitPlural: 'pomodoros',
+    description: 'Track focused work intervals (typically 25 minutes each)'
+  },
+  {
+    id: 'pages',
+    name: 'Pages Read/Written',
+    unit: 'page',
+    unitPlural: 'pages',
+    description: 'Track reading or writing progress'
+  },
+  {
+    id: 'custom',
+    name: 'Custom',
+    unit: 'unit',
+    unitPlural: 'units',
+    description: 'Define your own tracking unit'
+  }
+];
+
 export interface Session {
   id: string;
   timestamp: number; // Start time
@@ -26,6 +76,8 @@ export interface Session {
   pauseEvents?: PauseEvent[];   // Array of pause/resume events
   totalPauseTime?: number;      // Total seconds spent paused
   pauseCount?: number;          // Number of times paused
+  goalCategoryId?: GoalCategoryId;     // What type of goal was tracked
+  sessionGoalTarget?: number;          // Optional target for this session
 }
 
 export type ThemeName = 'founder' | 'calm';
@@ -48,6 +100,10 @@ export interface UserSettings {
   theme?: ThemeName; // Color theme preference
   activeDays?: number[]; // Days of week where daily goal applies (0=Sunday, 6=Saturday)
   enabledMetrics?: string[]; // IDs of metrics to display
+  goalCategoryId?: GoalCategoryId;      // Selected goal category
+  customGoalUnit?: string;              // Custom unit name (when goalCategoryId === 'custom')
+  customGoalUnitPlural?: string;        // Custom plural unit name
+  defaultSessionGoal?: number;          // Default target per session (optional)
 }
 
 export interface DailyStats {
@@ -78,5 +134,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   substanceFreeStartDate: new Date().toISOString(),
   theme: 'founder',
   activeDays: [1, 2, 3, 4, 5], // Monday-Friday by default
-  enabledMetrics: ['focusQuality', 'deepWorkRatio', 'consistency'] // Default metrics
+  enabledMetrics: ['focusQuality', 'deepWorkRatio', 'consistency'], // Default metrics
+  goalCategoryId: 'problems',          // Default to "Problems Solved"
+  defaultSessionGoal: undefined,       // No default session goal
 };

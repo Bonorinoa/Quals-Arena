@@ -1,10 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { Save, X, Palette, Calendar, BarChart3 } from 'lucide-react';
-import { UserSettings, ThemeName } from '../types';
+import { Save, X, Palette, Calendar, BarChart3, Target } from 'lucide-react';
+import { UserSettings, ThemeName, DEFAULT_GOAL_CATEGORIES } from '../types';
 import { themes } from '../utils/themes';
 import { calculateAllMetrics } from '../utils/customMetrics';
 import { useFocusTrap } from '../utils/focusTrap';
+import { getGoalLabels } from '../utils/goalUtils';
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -290,6 +291,94 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSave, on
             </div>
             <p className="text-xs text-zinc-500 mt-2">
               Metrics are calculated from last 7 days of sessions
+            </p>
+          </div>
+
+          {/* Goal Category Selection */}
+          <div className="pt-4 border-t border-zinc-800">
+            <label className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 mb-3 font-mono">
+              <Target size={14} />
+              What Are You Tracking?
+            </label>
+            <div className="space-y-2">
+              {DEFAULT_GOAL_CATEGORIES.map((category) => {
+                const isActive = formData.goalCategoryId === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => handleChange('goalCategoryId', category.id)}
+                    className={`w-full p-3 rounded-lg border text-left transition-all ${
+                      isActive 
+                        ? 'border-emerald-500/50 bg-emerald-950/20' 
+                        : 'border-white/10 bg-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="font-mono font-semibold text-sm text-white">
+                      {category.name}
+                    </div>
+                    <div className="text-xs text-zinc-400 mt-1">
+                      {category.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Custom Unit Input (only shown when 'custom' is selected) */}
+            {formData.goalCategoryId === 'custom' && (
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">
+                    Custom Unit (Singular)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customGoalUnit || ''}
+                    onChange={(e) => handleChange('customGoalUnit', e.target.value)}
+                    placeholder="e.g., chapter, module, sprint"
+                    className="input-glass"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">
+                    Custom Unit (Plural)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customGoalUnitPlural || ''}
+                    onChange={(e) => handleChange('customGoalUnitPlural', e.target.value)}
+                    placeholder="e.g., chapters, modules, sprints"
+                    className="input-glass"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Default Session Goal (Optional) */}
+          <div className="pt-4">
+            <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2 font-mono">
+              Default Session Goal (Optional)
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="50"
+              value={formData.defaultSessionGoal || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '') {
+                  handleChange('defaultSessionGoal', undefined);
+                } else {
+                  handleChange('defaultSessionGoal', Math.max(0, parseInt(value)));
+                }
+              }}
+              placeholder="No default"
+              className="input-glass"
+            />
+            <p className="text-xs text-zinc-500 mt-1">
+              Pre-fill your target {getGoalLabels(formData).plural} per session
             </p>
           </div>
 
