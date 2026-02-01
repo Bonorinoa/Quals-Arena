@@ -21,6 +21,7 @@ import { getTotalDuration, getTotalReps, getSessionsByDate, calculateSER, MIN_DU
 import { SessionEditModal } from './SessionEditModal';
 import { SessionDeleteDialog } from './SessionDeleteDialog';
 import { getGoalLabels, formatGoalCount } from '../utils/goalUtils';
+import { WeeklyReviewModal } from './WeeklyReviewModal';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -174,7 +175,9 @@ const DailyStatsModal: React.FC<{ date: string; sessions: Session[]; settings: U
 };
 
 // MONTHLY CALENDAR GRID - Displays current month with proper weekday alignment and day numbers
-const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string) => void }> = ({ sessions, onDayClick }) => {
+const ConsistencyGrid: React.FC<{ sessions: Session[]; settings: UserSettings; onDayClick: (date: string) => void }> = ({ sessions, settings, onDayClick }) => {
+   const goalLabels = useMemo(() => getGoalLabels(settings), [settings]);
+   
    const calendarData = useMemo(() => {
       const today = new Date();
       const monthStart = startOfMonth(today);
@@ -216,7 +219,7 @@ const ConsistencyGrid: React.FC<{ sessions: Session[]; onDayClick: (date: string
       }
       
       return { days: result, monthName: format(today, 'MMMM yyyy') };
-   }, [sessions]);
+   }, [sessions, goalLabels]);
 
    return (
       <div>
@@ -260,6 +263,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [deletingSession, setDeletingSession] = useState<Session | null>(null);
+  const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   
   const goalLabels = useMemo(() => getGoalLabels(settings), [settings]);
   
@@ -505,12 +509,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
               </div>
             )}
             
+            {/* WEEKLY REVIEW BUTTON */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowWeeklyReview(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-mono text-sm uppercase tracking-wider interactive"
+              >
+                <FileText size={16} />
+                Weekly Review
+              </button>
+            </div>
+            
             {/* HEATMAP LEDGER */}
             <div className="card-glass border-zinc-800">
                <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Grid size={12} /> Monthly Consistency Grid
                </div>
-               <ConsistencyGrid sessions={sessions} onDayClick={setSelectedDate} />
+               <ConsistencyGrid sessions={sessions} settings={settings} onDayClick={setSelectedDate} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -780,6 +795,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
           session={deletingSession}
           onConfirm={handleDeleteSession}
           onClose={() => setDeletingSession(null)}
+        />
+      )}
+
+      {/* Weekly Review Modal */}
+      {showWeeklyReview && (
+        <WeeklyReviewModal
+          sessions={sessions}
+          settings={settings}
+          onClose={() => setShowWeeklyReview(false)}
         />
       )}
     </div>

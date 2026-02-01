@@ -126,6 +126,65 @@ export enum ViewMode {
   SETTINGS = 'SETTINGS'
 }
 
+export interface WeeklyReportSection {
+  title: string;
+  content: string | string[];
+  highlight?: 'positive' | 'negative' | 'neutral';
+  emoji?: string;
+}
+
+export interface WeeklyReport {
+  id: string;
+  generatedAt: number;
+  weekStart: string;           // ISO date string (Monday)
+  weekEnd: string;             // ISO date string (Sunday)
+  
+  // Summary Stats
+  totalSessions: number;
+  totalDuration: number;       // seconds
+  totalGoalsCompleted: number; // reps using user's goal category
+  activeDaysCount: number;
+  
+  // Budget Balance
+  budgetBalance: {
+    total: number;             // seconds (+ surplus, - deficit)
+    dailyAverage: number;
+    totalSurplus: number;
+    totalDeficit: number;
+  };
+  
+  // Performance Metrics
+  metrics: {
+    focusQuality?: number;     // %
+    deepWorkRatio?: number;    // %
+    consistency?: number;      // %
+    avgSessionDuration?: number; // seconds
+    budgetAdherence?: number;  // %
+    ser?: number;              // SER value
+  };
+  
+  // Behavioral Insights
+  insights: {
+    bestDay?: string;          // Day of week with highest output
+    longestSession?: number;   // Duration in seconds
+    mostProductiveTimeSlot?: string; // Morning/Afternoon/Evening
+    pausePatterns?: {
+      avgPausesPerSession: number;
+      avgPauseTime: number;    // seconds
+    };
+  };
+  
+  // Templated Sections
+  sections: WeeklyReportSection[];
+  
+  // Week-over-Week Comparison
+  weekOverWeek?: {
+    durationChange: number;    // percentage
+    goalsChange: number;       // percentage
+    balanceChange: number;     // seconds difference
+  };
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   weeklyRepTarget: 50,
   dailyTimeGoalHours: 4,
