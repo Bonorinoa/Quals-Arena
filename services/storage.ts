@@ -6,7 +6,8 @@ const STORAGE_KEYS = {
   SESSIONS: 'highbeta_sessions',
   SETTINGS: 'highbeta_settings',
   VERSION: 'highbeta_version',
-  SYNC_QUEUE: 'highbeta_sync_queue'
+  SYNC_QUEUE: 'highbeta_sync_queue',
+  TIMER_STATE: 'highbeta_timer_state'
 };
 
 export { STORAGE_KEYS };

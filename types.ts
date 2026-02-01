@@ -4,6 +4,13 @@ export interface MentalNote {
   text: string;
 }
 
+export interface PauseEvent {
+  pausedAt: number;      // Timestamp when paused
+  resumedAt?: number;    // Timestamp when resumed (undefined if still paused)
+  elapsedAtPause: number; // Seconds elapsed when pause was triggered
+  pauseDuration?: number; // Calculated duration of pause in seconds
+}
+
 export interface Session {
   id: string;
   timestamp: number; // Start time
@@ -16,6 +23,9 @@ export interface Session {
   lastModified?: number; // Timestamp of last edit
   editCount?: number; // Number of times edited
   deleted?: boolean; // Soft delete flag
+  pauseEvents?: PauseEvent[];   // Array of pause/resume events
+  totalPauseTime?: number;      // Total seconds spent paused
+  pauseCount?: number;          // Number of times paused
 }
 
 export type ThemeName = 'founder' | 'calm';
