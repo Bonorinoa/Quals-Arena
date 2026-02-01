@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   ShieldCheck, ChevronDown, ChevronUp, Play, AlertOctagon, 
-  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X, Edit2, Trash2, BarChart3
+  TrendingUp, TrendingDown, Minus, Scale, Activity, Grid, FileText, X, Edit2, Trash2, BarChart3, Share2
 } from 'lucide-react';
 import { Session, UserSettings } from '../types';
 import { getEnabledMetrics } from '../utils/customMetrics';
@@ -22,6 +22,7 @@ import { SessionEditModal } from './SessionEditModal';
 import { SessionDeleteDialog } from './SessionDeleteDialog';
 import { getGoalLabels, formatGoalCount } from '../utils/goalUtils';
 import { WeeklyReviewModal } from './WeeklyReviewModal';
+import { ShareModal } from './ShareModal';
 
 /**
  * Penalty threshold for weekly budget balance (in seconds)
@@ -264,6 +265,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [deletingSession, setDeletingSession] = useState<Session | null>(null);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
+  const [sharingSession, setSharingSession] = useState<Session | null>(null);
   
   const goalLabels = useMemo(() => getGoalLabels(settings), [settings]);
   
@@ -733,6 +735,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
                            <td className="py-3 pl-4 text-right">
                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                <button
+                                 onClick={() => setSharingSession(s)}
+                                 className="p-1.5 glass-subtle border-zinc-700 hover:border-blue-500/50 hover:bg-blue-500/10 rounded transition-all"
+                                 title="Share session"
+                                 aria-label="Share session"
+                               >
+                                 <Share2 size={12} className="text-zinc-400 hover:text-blue-400" />
+                               </button>
+                               <button
                                  onClick={() => setEditingSession(s)}
                                  className="p-1.5 glass-subtle border-zinc-700 hover:border-emerald-500/50 hover:bg-emerald-500/10 rounded transition-all"
                                  title="Edit session"
@@ -804,6 +814,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ sessions, settings
           sessions={sessions}
           settings={settings}
           onClose={() => setShowWeeklyReview(false)}
+        />
+      )}
+
+      {/* Share Modal */}
+      {sharingSession && (
+        <ShareModal
+          type="session"
+          session={sharingSession}
+          settings={settings}
+          onClose={() => setSharingSession(null)}
         />
       )}
     </div>

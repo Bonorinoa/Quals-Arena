@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, Calendar, TrendingUp, TrendingDown, Minus, FileText, Copy, Check } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight, Calendar, TrendingUp, TrendingDown, Minus, FileText, Copy, Check, Share2 } from 'lucide-react';
 import { Session, UserSettings, WeeklyReport } from '../types';
 import { generateWeeklyReport, exportReportAsMarkdown } from '../utils/weeklyReportUtils';
 import { formatTimeFull } from '../utils/timeUtils';
 import { getGoalLabels } from '../utils/goalUtils';
 import { format, subWeeks, startOfWeek } from 'date-fns';
+import { ShareModal } from './ShareModal';
 
 interface WeeklyReviewModalProps {
   sessions: Session[];
@@ -19,6 +20,7 @@ export const WeeklyReviewModal: React.FC<WeeklyReviewModalProps> = ({
 }) => {
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const report = useMemo(() => 
     generateWeeklyReport(sessions, settings, weekOffset),
@@ -253,6 +255,14 @@ export const WeeklyReviewModal: React.FC<WeeklyReviewModalProps> = ({
           </div>
           <div className="flex gap-2">
             <button
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              title="Share to Instagram"
+            >
+              <Share2 size={16} />
+              <span className="text-sm">Share</span>
+            </button>
+            <button
               onClick={handleCopyToClipboard}
               className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md transition-colors"
             >
@@ -278,6 +288,16 @@ export const WeeklyReviewModal: React.FC<WeeklyReviewModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareModal
+          type="weekly"
+          report={report}
+          settings={settings}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   );
 };
