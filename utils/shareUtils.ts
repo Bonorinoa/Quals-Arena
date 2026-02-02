@@ -6,6 +6,23 @@ import { formatTimeFull } from './timeUtils';
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1920;
 
+// Polyfill for roundRect if not supported (older browsers)
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x: number, y: number, w: number, h: number, r: number | number[]) {
+    let radius = typeof r === 'number' ? r : r[0];
+    if (w < 2 * radius) radius = w / 2;
+    if (h < 2 * radius) radius = h / 2;
+    this.beginPath();
+    this.moveTo(x + radius, y);
+    this.arcTo(x + w, y, x + w, y + h, radius);
+    this.arcTo(x + w, y + h, x, y + h, radius);
+    this.arcTo(x, y + h, x, y, radius);
+    this.arcTo(x, y, x + w, y, radius);
+    this.closePath();
+    return this;
+  };
+}
+
 // Color palettes for card themes
 const cardThemes = {
   founder: {
