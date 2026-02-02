@@ -9,9 +9,9 @@ const CARD_HEIGHT = 1920;
 // Polyfill for roundRect if not supported (older browsers)
 if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x: number, y: number, w: number, h: number, r: number | number[]) {
-    const radius = typeof r === 'number' ? r : r[0];
-    if (w < 2 * radius) r = w / 2;
-    if (h < 2 * radius) r = h / 2;
+    let radius = typeof r === 'number' ? r : r[0];
+    if (w < 2 * radius) radius = w / 2;
+    if (h < 2 * radius) radius = h / 2;
     this.beginPath();
     this.moveTo(x + radius, y);
     this.arcTo(x + w, y, x + w, y + h, radius);
