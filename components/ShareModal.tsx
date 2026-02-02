@@ -30,33 +30,41 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareStatus, setShareStatus] = useState<'idle' | 'success' | 'downloaded'>('idle');
+  const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // Generate preview when options change
   useEffect(() => {
     const generatePreview = async () => {
-      setIsGenerating(true);
-      
-      const style = { 
-        theme: cardTheme, 
-        showBranding, 
-        showWatermark: true 
-      };
-      
-      let canvas: HTMLCanvasElement;
-      
-      if (type === 'session' && session) {
-        canvas = await generateSessionShareCard(session, settings, style);
-      } else if (type === 'weekly' && report) {
-        canvas = await generateWeeklyShareCard(report, settings, style);
-      } else {
+      try {
+        setIsGenerating(true);
+        setError(null);
+        
+        const style = { 
+          theme: cardTheme, 
+          showBranding, 
+          showWatermark: true 
+        };
+        
+        let canvas: HTMLCanvasElement;
+        
+        if (type === 'session' && session) {
+          canvas = await generateSessionShareCard(session, settings, style);
+        } else if (type === 'weekly' && report) {
+          canvas = await generateWeeklyShareCard(report, settings, style);
+        } else {
+          setIsGenerating(false);
+          return;
+        }
+        
+        canvasRef.current = canvas;
+        setPreviewUrl(canvas.toDataURL('image/png'));
         setIsGenerating(false);
-        return;
+      } catch (err) {
+        setError('Failed to generate preview. Please try again.');
+        console.error('Share card generation error:', err);
+        setIsGenerating(false);
       }
-      
-      canvasRef.current = canvas;
-      setPreviewUrl(canvas.toDataURL('image/png'));
-      setIsGenerating(false);
     };
     
     generatePreview();
@@ -65,17 +73,23 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const handleShare = async () => {
     if (!canvasRef.current) return;
     
-    const filename = type === 'session' 
-      ? `highbeta-session-${session?.date}.png`
-      : `highbeta-weekly-${report?.weekStart}.png`;
-    const title = type === 'session' 
-      ? 'My Focus Session'
-      : 'My Weekly Review';
-    
-    const result = await shareOrDownload(canvasRef.current, filename, title);
-    setShareStatus(result === 'shared' ? 'success' : 'downloaded');
-    
-    setTimeout(() => setShareStatus('idle'), 3000);
+    try {
+      setError(null);
+      const filename = type === 'session' 
+        ? `highbeta-session-${session?.date}.png`
+        : `highbeta-weekly-${report?.weekStart}.png`;
+      const title = type === 'session' 
+        ? 'My Focus Session'
+        : 'My Weekly Review';
+      
+      const result = await shareOrDownload(canvasRef.current, filename, title);
+      setShareStatus(result === 'shared' ? 'success' : 'downloaded');
+      
+      setTimeout(() => setShareStatus('idle'), 3000);
+    } catch (err) {
+      setError('Failed to share/download image. Please try again.');
+      console.error('Share error:', err);
+    }
   };
   
   const themeOptions: { value: CardTheme; label: string; preview: string }[] = [
@@ -117,6 +131,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         
         {/* Preview */}
         <div className="p-6 flex-1 overflow-y-auto">
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
+              {error}
+            </div>
+          )}
+          
           <div className="aspect-[9/16] bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 mb-6">
             {isGenerating ? (
               <div className="w-full h-full flex items-center justify-center">
