@@ -185,6 +185,43 @@ export interface WeeklyReport {
   };
 }
 
+// Share card types for Instagram sharing
+export type ShareCardType = 'session' | 'weekly' | 'streak';
+
+export interface ShareCardData {
+  type: ShareCardType;
+  // Session-specific
+  session?: {
+    duration: number;
+    goals: number;
+    date: string;
+    note?: string;
+    pauseCount?: number;
+  };
+  // Weekly-specific
+  weekly?: {
+    weekStart: string;
+    weekEnd: string;
+    totalDuration: number;
+    totalGoals: number;
+    sessionsCount: number;
+    budgetBalance: number;
+    focusQuality?: number;
+    streak?: number;
+  };
+  // Streak-specific
+  streak?: {
+    days: number;
+    label: string; // "Signal Integrity" or custom
+  };
+}
+
+export interface ShareCardStyle {
+  theme: 'founder' | 'calm' | 'dark' | 'light';
+  showBranding: boolean;
+  showWatermark: boolean;
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   weeklyRepTarget: 50,
   dailyTimeGoalHours: 4,
